@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import TodoTable from './components/todo-table';
+import TodoList from './components/todo-list';
 import './App.css';
 
 const {app} = window.require('electron').remote;
@@ -10,10 +10,9 @@ class App extends Component {
   state = {
     count: 1,
     reminders: []
-  }
+  };
 
-  constructor(props) {
-    super(props);
+  componentDidMount() {
     this.create('Add toolbar', 5);
     this.create('get rid of pagination', 5);
     this.create('support create', 1);
@@ -22,6 +21,7 @@ class App extends Component {
 
   create = (headline, priority=5) => {
     let {reminders, count} = this.state;
+    count += 1;
     reminders.push({
       id: count++,
       headline,
@@ -36,10 +36,19 @@ class App extends Component {
     this.setState({reminders, count});
   };
 
+  delete = deleteId => {
+    let {reminders} = this.state;
+    reminders = reminders.filter(t => t.id !== deleteId);
+    this.setState({reminders});
+  };
+
   render() {
     return (
       <div className="App">
-        <TodoTable data={this.state.reminders} onCreate={this.create} />
+        <TodoList data={this.state.reminders}
+                  onCreate={this.create}
+                  onDelete={this.delete}
+        />
       </div>
     );
   }

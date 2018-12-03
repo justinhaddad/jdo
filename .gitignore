@@ -48,9 +48,6 @@ coverage.xml
 instance/
 .webassets-cache
 
-# Jupyter Notebook
-.ipynb_checkpoints
-
 # pyenv
 .python-version
 
@@ -70,3 +67,5 @@ env.bak/
 venv.bak/
 
 .idea
+yarn.lock
+node_modules
