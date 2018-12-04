@@ -12,13 +12,6 @@ class App extends Component {
     reminders: []
   };
 
-  componentDidMount() {
-    this.create('Add toolbar', 5);
-    this.create('get rid of pagination', 5);
-    this.create('support create', 1);
-    this.create('support delete', 2);
-  }
-
   create = (headline, priority=5) => {
     let {reminders, count} = this.state;
     count += 1;

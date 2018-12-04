@@ -11,8 +11,7 @@ import Toolbar from '../toolbar';
 import Typography from '@material-ui/core/Typography';
 import Paper from '@material-ui/core/Paper';
 import Checkbox from '@material-ui/core/Checkbox';
-import { lighten } from '@material-ui/core/styles/colorManipulator';
-
+import {loadTodos} from '../../api';
 
 function desc(a, b, orderBy) {
   if (b[orderBy] < a[orderBy]) {
@@ -47,12 +46,13 @@ const styles = theme => ({
 
 class TodoList extends React.Component {
   state = {
-    order: 'asc',
-    orderBy: 'priority',
-    selected: [],
-    page: 0,
-    rowsPerPage: 5,
+    todos: [],
   };
+
+  componentDidMount() {
+    loadTodos().then(data => this.setState({todos: data}))
+               .catch(reason => console.error(reason));
+  }
 
   handleClick = (event, id) => {
     const { selected } = this.state;
@@ -76,14 +76,14 @@ class TodoList extends React.Component {
   };
 
   render() {
-    const { classes, data, onCreate, onDelete } = this.props;
-    const { order, orderBy } = this.state;
+    const { classes, onCreate, onDelete } = this.props;
+    const { todos, order, orderBy } = this.state;
 
     return (
       <Paper className={classes.root}>
         <Toolbar onCreate={onCreate}/>
           <List className={classes.root}>
-              {stableSort(data, getSorting(order, orderBy))
+              {stableSort(todos, getSorting(order, orderBy))
                 .map(n => {
                   return (
                     <ListItem
