@@ -4,6 +4,7 @@ services:
   jdo-service:
     build: .  # path is relative to docker-compose.yml localtion
     volumes:
-      - .:/usr/src/app # mount point
+      - ./app:/app # mount point
+      - /var/lib/:/private/var/lib/
     ports:
-      - 5001:80  # host:container
+      - 5005:8000  # host:container
