@@ -1,4 +1,5 @@
 import React from 'react';
+import {fromJS} from 'immutable';
 import classNames from 'classnames';
 import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
@@ -11,7 +12,7 @@ import Toolbar from '../toolbar';
 import Typography from '@material-ui/core/Typography';
 import Paper from '@material-ui/core/Paper';
 import Checkbox from '@material-ui/core/Checkbox';
-import {loadTodos} from '../../api';
+import {createTodo, deleteTodo, loadTodos} from '../../api';
 
 function desc(a, b, orderBy) {
   if (b[orderBy] < a[orderBy]) {
@@ -46,12 +47,16 @@ const styles = theme => ({
 
 class TodoList extends React.Component {
   state = {
-    todos: [],
+    todos: fromJS([]),
   };
 
+  reloadTodos() {
+    loadTodos().then(data => this.setState({todos: fromJS(data)}))
+      .catch(reason => console.error(reason));
+  }
+
   componentDidMount() {
-    loadTodos().then(data => this.setState({todos: data}))
-               .catch(reason => console.error(reason));
+    this.reloadTodos();
   }
 
   handleClick = (event, id) => {
@@ -75,37 +80,46 @@ class TodoList extends React.Component {
     this.setState({ selected: newSelected });
   };
 
-  render() {
-    const { classes, onCreate, onDelete } = this.props;
-    const { todos, order, orderBy } = this.state;
+  create = async todo => {
+    await createTodo(todo);
+    this.reloadTodos();
+  };
 
+  delete = async id => {
+    await deleteTodo(id);
+    this.reloadTodos();
+  }
+
+  render() {
+    const { classes } = this.props;
+    const { todos, order, orderBy } = this.state;
     return (
       <Paper className={classes.root}>
-        <Toolbar onCreate={onCreate}/>
-          <List className={classes.root}>
-              {stableSort(todos, getSorting(order, orderBy))
-                .map(n => {
-                  return (
-                    <ListItem
-                      hover
-                      onClick={event => this.handleClick(event, n.id)}
-                      role="checkbox"
+        <Toolbar onCreate={this.create}/>
+        <List className={classes.root}>
+            {stableSort(todos.toJS(), getSorting(order, orderBy))
+              .map(n => {
+                return (
+                  <ListItem
+                    hover
+                    // onClick={event => this.handleClick(event, n.id)}
+                    role="checkbox"
+                    tabIndex={-1}
+                    key={n.id}
+                  >
+                    <Checkbox
+                      checked={n.complete}
                       tabIndex={-1}
-                      key={n.id}
-                    >
-                      <Checkbox
-                        checked={n.complete}
-                        tabIndex={-1}
-                        disableRipple
-                      />
-                      <ListItemText primary={n.headline} />
-                      <IconButton aria-label="Delete" onClick={() => onDelete(n.id)}>
-                        <DeleteIcon/>
-                      </IconButton>
-                    </ListItem>
-                  );
-                })}
-          </List>
+                      disableRipple
+                    />
+                    <ListItemText primary={n.headline} />
+                    <IconButton aria-label="Delete" onClick={() => this.delete(n.id)}>
+                      <DeleteIcon/>
+                    </IconButton>
+                  </ListItem>
+                );
+              })}
+        </List>
       </Paper>
     );
   }
@@ -113,8 +127,6 @@ class TodoList extends React.Component {
 
 TodoList.propTypes = {
   classes: PropTypes.object.isRequired,
-  onCreate: PropTypes.func.isRequired,
-  onDelete: PropTypes.func.isRequired,
 };
 
 export default withStyles(styles)(TodoList);

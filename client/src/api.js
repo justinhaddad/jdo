@@ -5,6 +5,22 @@ export const loadTodos = async () => {
     headers: {'Access-Control-Allow-Origin': '*'},
   });
   const data = await resp.json();
-  console.log('DATA: ', data);
   return data;
+};
+
+export const createTodo = async todo => {
+  const resp = await fetch(URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json; charset=utf-8',
+    },
+    body: JSON.stringify(todo),
+  });
+  return await resp.json();
+};
+
+export const deleteTodo = async id => {
+  await fetch(`${URL}/${id}`, {
+    method: 'DELETE',
+  });
 };

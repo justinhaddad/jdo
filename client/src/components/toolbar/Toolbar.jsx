@@ -45,7 +45,7 @@ class EnhancedTableToolbar extends React.Component {
   };
 
   handleCreate = () => {
-    this.props.onCreate(this.state.headline);
+    this.props.onCreate({...this.state});
     this.setState({headline: ''});
   };
 
@@ -100,7 +100,6 @@ class EnhancedTableToolbar extends React.Component {
 
 EnhancedTableToolbar.propTypes = {
   classes: PropTypes.object.isRequired,
-  numSelected: PropTypes.number.isRequired,
 };
 
 export default withStyles(toolbarStyles)(EnhancedTableToolbar);

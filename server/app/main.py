@@ -55,7 +55,6 @@ class TodoList:
         ret = []
         for t in todos:
             ret.append(model_to_dict(t))
-        log.warning('Return: %s' % ret)
         resp.body = json.dumps(ret, cls=Encoder)
 
     def on_post(self, req, resp):
@@ -65,7 +64,6 @@ class TodoList:
         data = json.load(req.stream)
         try:
             t = models.Todo.create(**data)
-            log.warning('Create: %s' % model_to_dict(t))
             resp.body = json.dumps(model_to_dict(t), cls=Encoder)
             resp.status = falcon.HTTP_201
         except IntegrityError as e:
@@ -73,5 +71,12 @@ class TodoList:
             resp.status = falcon.HTTP_422
 
 
+class Todo:
+    def on_delete(self, req, resp, id):
+        models.Todo.delete_by_id(id)
+        resp.status = falcon.HTTP_204
+
+
 api = application = falcon.API(middleware=CORSComponent())
 api.add_route('/todos', TodoList())
+api.add_route('/todos/{id}', Todo())

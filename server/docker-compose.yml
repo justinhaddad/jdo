@@ -5,6 +5,6 @@ services:
     build: .  # path is relative to docker-compose.yml localtion
     volumes:
       - ./app:/app # mount point
-      - /var/lib/:/private/var/lib/
+      - /Users/jhaddad/jdo/:/var/lib/
     ports:
       - 5005:8000  # host:container
