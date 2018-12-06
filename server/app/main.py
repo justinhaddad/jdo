@@ -1,14 +1,34 @@
 import datetime
+import re
+
 import falcon
 import json
-from . import models
 import logging
 from peewee import IntegrityError
 from playhouse.shortcuts import model_to_dict
+from wsgiref import simple_server
 
-log = logging.getLogger(__name__)
+import models
+
 count = 0
 models.connect()
+
+
+def get_module_logger(mod_name):
+    """
+    To use this, do logger = get_module_logger(__name__)
+    """
+    logger = logging.getLogger(mod_name)
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter(
+        '%(asctime)s [%(name)-12s] %(levelname)-8s %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    logger.setLevel(logging.DEBUG)
+    return logger
+
+
+log = get_module_logger(__name__)
 
 
 class Encoder(json.JSONEncoder):
@@ -49,6 +69,35 @@ class CORSComponent(object):
             ))
 
 
+class CamelSnake:
+    def process_request(self, req, resp):
+        if req.method in ['POST', 'PUT', 'PATCH']:
+            body = json.load(req.stream)
+            for key in body:
+                snake = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', key)
+                snake = re.sub('([a-z0-9])([A-Z])', r'\1_\2', snake).lower()
+                body[snake] = body.pop(key)
+            req.context['body'] = body
+
+    def process_response(self, req, resp, resource, req_succeeded):
+        def convert(obj):
+            converted = {}
+            for key in obj.keys():
+                components = key.split('_')
+                camel = key if len(components) == 1 else \
+                    components[0] + ''.join(x.title() for x in components[1:])
+                converted[camel] = obj[key]
+            return converted
+
+        if resp.body:
+            body = json.loads(resp.body)
+            if isinstance(body, list):
+                new_body = list(map(convert, body))
+            else:
+                new_body = convert(body)
+            resp.body = json.dumps(new_body)
+
+
 class TodoList:
     def on_get(self, req, resp):
         todos = models.Todo.select()
@@ -61,7 +110,7 @@ class TodoList:
         if not req.content_length:
             resp.status = falcon.HTTP_422
             return
-        data = json.load(req.stream)
+        data = req.context['body']
         try:
             t = models.Todo.create(**data)
             resp.body = json.dumps(model_to_dict(t), cls=Encoder)
@@ -77,6 +126,10 @@ class Todo:
         resp.status = falcon.HTTP_204
 
 
-api = application = falcon.API(middleware=CORSComponent())
+api = application = falcon.API(middleware=[CORSComponent(), CamelSnake()])
 api.add_route('/todos', TodoList())
 api.add_route('/todos/{id}', Todo())
+
+if __name__ == '__main__':
+    httpd = simple_server.make_server('127.0.0.1', 5005, api)
+    httpd.serve_forever()

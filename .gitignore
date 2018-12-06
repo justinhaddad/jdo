@@ -69,3 +69,4 @@ venv.bak/
 .idea
 yarn.lock
 node_modules
+package-lock.json

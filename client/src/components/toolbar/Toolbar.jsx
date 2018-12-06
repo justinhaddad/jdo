@@ -45,7 +45,7 @@ class EnhancedTableToolbar extends React.Component {
   };
 
   handleCreate = () => {
-    this.props.onCreate({...this.state});
+    this.props.onCreate(this.state.headline);
     this.setState({headline: ''});
   };
 

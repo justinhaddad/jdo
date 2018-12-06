@@ -59,29 +59,8 @@ class TodoList extends React.Component {
     this.reloadTodos();
   }
 
-  handleClick = (event, id) => {
-    const { selected } = this.state;
-    const selectedIndex = selected.indexOf(id);
-    let newSelected = [];
-
-    if (selectedIndex === -1) {
-      newSelected = newSelected.concat(selected, id);
-    } else if (selectedIndex === 0) {
-      newSelected = newSelected.concat(selected.slice(1));
-    } else if (selectedIndex === selected.length - 1) {
-      newSelected = newSelected.concat(selected.slice(0, -1));
-    } else if (selectedIndex > 0) {
-      newSelected = newSelected.concat(
-        selected.slice(0, selectedIndex),
-        selected.slice(selectedIndex + 1),
-      );
-    }
-
-    this.setState({ selected: newSelected });
-  };
-
-  create = async todo => {
-    await createTodo(todo);
+  create = async headline => {
+    await createTodo(headline);
     this.reloadTodos();
   };
 
@@ -101,10 +80,7 @@ class TodoList extends React.Component {
               .map(n => {
                 return (
                   <ListItem
-                    hover
-                    // onClick={event => this.handleClick(event, n.id)}
                     role="checkbox"
-                    tabIndex={-1}
                     key={n.id}
                   >
                     <Checkbox

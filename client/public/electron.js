@@ -20,6 +20,9 @@ function createWindow() {
       : `file://${path.join(__dirname, "../build/index.html")}`
   );
   mainWindow.on("closed", () => (mainWindow = null));
+
+  //const reminderWin = new BrowserWindow({ width: 900, height: 680, parent: mainWindow, titleBarStyle: 'hidden' });
+  //reminderWin.loadURL(`file://${path.join(__dirname, "reminders.html")}`)
 }
 
 app.on("ready", createWindow);
