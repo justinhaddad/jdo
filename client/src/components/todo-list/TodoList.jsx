@@ -2,17 +2,37 @@ import React from 'react';
 import {fromJS} from 'immutable';
 import classNames from 'classnames';
 import PropTypes from 'prop-types';
-import { withStyles } from '@material-ui/core/styles';
+import {withStyles} from '@material-ui/core/styles';
+import Button from '@material-ui/core/Button';
+import Checkbox from '@material-ui/core/Checkbox';
+import Divider from '@material-ui/core/Divider';
 import DeleteIcon from '@material-ui/icons/Delete';
+import Collapse from '@material-ui/core/Collapse';
+import Fade from '@material-ui/core/Fade';
+import FormControl from '@material-ui/core/FormControl';
+import Grid from '@material-ui/core/Grid';
 import IconButton from '@material-ui/core/IconButton';
+import InputLabel from '@material-ui/core/InputLabel';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
+import Menu from '@material-ui/core/Menu';
+import MenuItem from '@material-ui/core/MenuItem';
+import Paper from '@material-ui/core/Paper';
+import Select from '@material-ui/core/Select';
+import Sugar from 'sugar-date';
 import Toolbar from '../toolbar';
 import Typography from '@material-ui/core/Typography';
-import Paper from '@material-ui/core/Paper';
-import Checkbox from '@material-ui/core/Checkbox';
-import {createTodo, deleteTodo, loadTodos} from '../../api';
+import {createTodo, deleteTodo, loadTodos, updateTodo} from '../../api';
+
+String.prototype.capitalize = function() {
+  return this.charAt(0).toUpperCase() + this.slice(1);
+};
+
+const repeatOptions = [
+  'never', 'daily', 'weekly', 'hourly', 'monthly', 'weekdays', 'mondays', 'tuesdays', 'wednesdays',
+  'thursdays', 'fridays'
+];
 
 function desc(a, b, orderBy) {
   if (b[orderBy] < a[orderBy]) {
@@ -43,10 +63,17 @@ const styles = theme => ({
     width: '100%',
     backgroundColor: theme.palette.background.paper,
   },
+  inline: {
+    display: 'inline',
+  },
+  strikethru: {
+    textDecoration: 'line-through',
+  },
 });
 
 class TodoList extends React.Component {
   state = {
+    anchorEl: null,
     todos: fromJS([]),
   };
 
@@ -67,18 +94,36 @@ class TodoList extends React.Component {
   delete = async id => {
     await deleteTodo(id);
     this.reloadTodos();
+  };
+
+  handleMenuItemClick = async (event, index) => {
+    this.setState({ selectedIndex: index, anchorEl: null });
+    await updateTodo(this.state.selectedTodo, {'repeat': repeatOptions[index]});
+    this.reloadTodos();
+  };
+
+  handleRepeatChange = async (e, todoId) => {
+    this.setState({anchorEl: null});
+    await updateTodo(todoId, {'repeat': e.target.value});
+    this.reloadTodos();
+  };
+
+  handleToggleComplete = async (todoId, current) => {
+    await updateTodo(todoId, {'complete': !current});
+    this.reloadTodos();
   }
 
   render() {
-    const { classes } = this.props;
-    const { todos, order, orderBy } = this.state;
+    const {classes} = this.props;
+    const {anchorEl, todos, order, orderBy} = this.state;
     return (
       <Paper className={classes.root}>
         <Toolbar onCreate={this.create}/>
         <List className={classes.root}>
-            {stableSort(todos.toJS(), getSorting(order, orderBy))
-              .map(n => {
-                return (
+          {stableSort(todos.toJS(), getSorting(order, orderBy))
+            .map(n => {
+              return (
+                <React.Fragment>
                   <ListItem
                     role="checkbox"
                     key={n.id}
@@ -87,14 +132,53 @@ class TodoList extends React.Component {
                       checked={n.complete}
                       tabIndex={-1}
                       disableRipple
+                      onClick={() => this.handleToggleComplete(n.id, n.complete)}
                     />
-                    <ListItemText primary={n.headline} />
+                    <ListItemText
+                      primary={
+                        <Typography className={n.complete ? classes.strikethru : null}>{n.headline}</Typography>
+                          }
+                      secondary={ !n.complete && (
+                        <Grid container>
+                          <Grid item xs>
+                            <Typography component="span" className={classes.inline} color="textSecondary">
+                              Next Reminder: &nbsp;
+                              {n.nextReminder ? Sugar.Date(n.nextReminder).relative().raw : 'Never'}
+                            </Typography>
+
+                          </Grid>
+                          <Grid item xs>
+                            <Typography component="span" className={classes.inline} color="textSecondary">
+                              Repeats:
+                            </Typography>
+                            <FormControl className={classes.formControl}>
+                              <Select
+                                value={n.repeat}
+                                onChange={e => this.handleRepeatChange(e, n.id)}
+                                inputProps={{
+                                  name: `repeat-${n.id}`,
+                                  id: `repeat-${n.id}`,
+                                }}
+                              >
+                                {repeatOptions.map(option => (
+                                  <MenuItem value={option}>{option.capitalize()}</MenuItem>
+                                ))}
+                              </Select>
+                            </FormControl>
+                          </Grid>
+                        </Grid>
+                      )}
+                    />
                     <IconButton aria-label="Delete" onClick={() => this.delete(n.id)}>
                       <DeleteIcon/>
                     </IconButton>
                   </ListItem>
-                );
-              })}
+                  <li>
+                    <Divider variant="inset"/>
+                  </li>
+                </React.Fragment>
+              );
+            })}
         </List>
       </Paper>
     );

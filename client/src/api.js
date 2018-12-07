@@ -39,3 +39,13 @@ export const deleteTodo = async id => {
     method: 'DELETE',
   });
 };
+
+export const updateTodo = async (id, data) => {
+  await fetch(`${URL}/${id}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json; charset=utf-8',
+    },
+    body: JSON.stringify(data),
+  });
+};
