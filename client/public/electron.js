@@ -6,6 +6,7 @@ const path = require("path");
 const isDev = require("electron-is-dev");
 
 let mainWindow;
+let reminderWindow;
 
 require("update-electron-app")({
   repo: "kitze/react-electron-example",
@@ -13,16 +14,25 @@ require("update-electron-app")({
 });
 
 function createWindow() {
-  mainWindow = new BrowserWindow({ width: 900, height: 680 });
+  mainWindow = new BrowserWindow({ width: 900, height: 680, title: 'JDO' });
   mainWindow.loadURL(
     isDev
-      ? "http://localhost:3000"
-      : `file://${path.join(__dirname, "../build/index.html")}`
+      ? "http://localhost:3000?todos"
+      : `file://${path.join(__dirname, "../build/index.html?todos")}`
   );
   mainWindow.on("closed", () => (mainWindow = null));
 
-  //const reminderWin = new BrowserWindow({ width: 900, height: 680, parent: mainWindow, titleBarStyle: 'hidden' });
-  //reminderWin.loadURL(`file://${path.join(__dirname, "reminders.html")}`)
+  const reminderWindow = new BrowserWindow({
+    width: 400, height: 780, parent: mainWindow,
+    title: 'Reminders',
+  });
+  reminderWindow.setAlwaysOnTop(true, 'screen-saver');
+  reminderWindow.loadURL(
+    isDev
+      ? "http://localhost:3000?reminders"
+      : `file://${path.join(__dirname, "../build/index.html?reminders")}`
+  );
+  //setInterval(() => reminderWindow.show(), 5000);
 }
 
 app.on("ready", createWindow);
@@ -38,3 +48,4 @@ app.on("activate", () => {
     createWindow();
   }
 });
+

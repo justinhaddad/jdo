@@ -5,24 +5,24 @@ import PropTypes from 'prop-types';
 import {withStyles} from '@material-ui/core/styles';
 import Button from '@material-ui/core/Button';
 import Checkbox from '@material-ui/core/Checkbox';
+import DateFnsUtils from '@date-io/date-fns';
+import { MuiPickersUtilsProvider } from 'material-ui-pickers';
+import { DateTimePicker } from 'material-ui-pickers';
 import Divider from '@material-ui/core/Divider';
 import DeleteIcon from '@material-ui/icons/Delete';
-import Collapse from '@material-ui/core/Collapse';
-import Fade from '@material-ui/core/Fade';
 import FormControl from '@material-ui/core/FormControl';
 import Grid from '@material-ui/core/Grid';
 import IconButton from '@material-ui/core/IconButton';
-import InputLabel from '@material-ui/core/InputLabel';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
-import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 import Paper from '@material-ui/core/Paper';
 import Select from '@material-ui/core/Select';
 import Sugar from 'sugar-date';
 import Toolbar from '../toolbar';
 import Typography from '@material-ui/core/Typography';
+
 import {createTodo, deleteTodo, loadTodos, updateTodo} from '../../api';
 
 String.prototype.capitalize = function() {
@@ -77,9 +77,8 @@ class TodoList extends React.Component {
     todos: fromJS([]),
   };
 
-  reloadTodos() {
-    loadTodos().then(data => this.setState({todos: fromJS(data)}))
-      .catch(reason => console.error(reason));
+  async reloadTodos() {
+    loadTodos(this.props.remindersOnly).then(data => this.setState({todos: fromJS(data)}));
   }
 
   componentDidMount() {
@@ -104,14 +103,20 @@ class TodoList extends React.Component {
 
   handleRepeatChange = async (e, todoId) => {
     this.setState({anchorEl: null});
-    await updateTodo(todoId, {'repeat': e.target.value});
+    await updateTodo(todoId, {repeat: e.target.value});
     this.reloadTodos();
   };
 
   handleToggleComplete = async (todoId, current) => {
-    await updateTodo(todoId, {'complete': !current});
+    await updateTodo(todoId, {complete: !current});
     this.reloadTodos();
-  }
+  };
+
+  handleNextReminderChange = async (todoId, date) => {
+    console.log('Date: ', date.toISOString());
+    await updateTodo(todoId, {nextReminder: date.toISOString()});
+    this.reloadTodos();
+  };
 
   render() {
     const {classes} = this.props;
@@ -141,11 +146,15 @@ class TodoList extends React.Component {
                       secondary={ !n.complete && (
                         <Grid container>
                           <Grid item xs>
-                            <Typography component="span" className={classes.inline} color="textSecondary">
-                              Next Reminder: &nbsp;
-                              {n.nextReminder ? Sugar.Date(n.nextReminder).relative().raw : 'Never'}
-                            </Typography>
-
+                            <MuiPickersUtilsProvider utils={DateFnsUtils}>
+                              <DateTimePicker
+                                value={n.nextReminder}
+                                onChange={date => this.handleNextReminderChange(n.id, date)}
+                                label="Next Reminder"
+                                showTodayButton
+                              />
+                            </MuiPickersUtilsProvider>
+                            ({n.nextReminder ? Sugar.Date(n.nextReminder).relative().raw : 'Never'})
                           </Grid>
                           <Grid item xs>
                             <Typography component="span" className={classes.inline} color="textSecondary">

@@ -8,6 +8,7 @@ from peewee import IntegrityError
 from playhouse.shortcuts import model_to_dict
 from wsgiref import simple_server
 
+from models import Todo
 import models
 
 count = 0
@@ -100,7 +101,12 @@ class CamelSnake:
 
 class TodoList:
     def on_get(self, req, resp):
-        todos = models.Todo.select()
+        log.info('remindersOnly: %s' % type(req.params['remindersOnly']))
+        if req.get_param_as_bool('remindersOnly'):
+            todos = Todo.select().where(Todo.next_reminder <=
+                                        datetime.datetime.now())
+        else:
+            todos = Todo.select()
         ret = []
         for t in todos:
             ret.append(model_to_dict(t))
@@ -112,7 +118,7 @@ class TodoList:
             return
         data = req.context['body']
         try:
-            t = models.Todo.create(**data)
+            t = Todo.create(**data)
             resp.body = json.dumps(model_to_dict(t), cls=Encoder)
             resp.status = falcon.HTTP_201
         except IntegrityError as e:
@@ -120,21 +126,21 @@ class TodoList:
             resp.status = falcon.HTTP_422
 
 
-class Todo:
+class TodoItem:
     def on_delete(self, req, resp, id):
-        models.Todo.delete_by_id(id)
+        Todo.delete_by_id(id)
         resp.status = falcon.HTTP_204
 
     def on_patch(self, req, resp, id):
         models.Todo.set_by_id(id, req.context['body'])
         resp.status = falcon.HTTP_200
-        todo = models.Todo.get_by_id(id)
+        todo = Todo.get_by_id(id)
         resp.body = json.dumps(model_to_dict(todo), cls=Encoder)
 
 
 api = application = falcon.API(middleware=[CORSComponent(), CamelSnake()])
 api.add_route('/todos', TodoList())
-api.add_route('/todos/{id}', Todo())
+api.add_route('/todos/{id}', TodoItem())
 
 if __name__ == '__main__':
     httpd = simple_server.make_server('127.0.0.1', 5005, api)

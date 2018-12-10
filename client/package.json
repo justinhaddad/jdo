@@ -5,14 +5,18 @@
   "version": "0.2.7",
   "private": true,
   "dependencies": {
+    "@date-io/date-fns": "^0.0.2",
     "@material-ui/core": "^3.6.0",
     "@material-ui/icons": "^3.0.1",
     "cross-env": "5.1.6",
+    "date-fns": "2.0.0-alpha.25",
     "electron-is-dev": "0.3.0",
     "electron-log": "^2.2.6",
     "immutable": "^4.0.0-rc.12",
+    "material-ui-pickers": "^2.0.4",
     "react": "16.4.0",
     "react-dom": "16.4.0",
+    "react-router-dom": "^4.3.1",
     "sugar": "^2.0.4",
     "sugar-date": "^2.0.6",
     "update-electron-app": "^1.2.0"
