@@ -5,10 +5,10 @@ const URL = 'http://localhost:5005/todos';
 export const loadTodos = async (remindersOnly = false) => {
   const url = `${URL}?remindersOnly=${remindersOnly}`;
   const resp = await fetch(url, {
-    headers: {'Access-Control-Allow-Origin': '*'},
+    // headers: {'Access-Control-Allow-Origin': '*'},
   });
   const data = await resp.json();
-  return data;
+  return data.data;
 };
 
 export const createTodo = async headline => {

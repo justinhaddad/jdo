@@ -88,6 +88,8 @@ class CamelSnake:
                 camel = key if len(components) == 1 else \
                     components[0] + ''.join(x.title() for x in components[1:])
                 converted[camel] = obj[key]
+                if isinstance(obj[key], list):
+                    converted[key] = list(map(convert, obj[key]))
             return converted
 
         if resp.body:
@@ -101,16 +103,17 @@ class CamelSnake:
 
 class TodoList:
     def on_get(self, req, resp):
-        log.info('remindersOnly: %s' % type(req.params['remindersOnly']))
         if req.get_param_as_bool('remindersOnly'):
-            todos = Todo.select().where(Todo.next_reminder <=
-                                        datetime.datetime.now())
+            todos = Todo.select().where(
+                (Todo.next_reminder <= datetime.datetime.utcnow()) &
+                (Todo.complete == 0))
         else:
             todos = Todo.select()
         ret = []
         for t in todos:
             ret.append(model_to_dict(t))
-        resp.body = json.dumps(ret, cls=Encoder)
+        resp.body = json.dumps({'data': ret, 'totalCount': len(ret)},
+                               cls=Encoder)
 
     def on_post(self, req, resp):
         if not req.content_length:
