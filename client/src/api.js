@@ -13,7 +13,6 @@ export const loadTodos = async (remindersOnly = false) => {
 
 export const createTodo = async headline => {
   const parts = headline.split(';').map(s => s.trim());
-  console.log('Parts: ', parts);
   const todo = {
     headline: parts[0],
   };

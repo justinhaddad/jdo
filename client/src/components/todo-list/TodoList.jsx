@@ -73,7 +73,6 @@ const styles = theme => ({
 
 class TodoList extends React.Component {
   state = {
-    anchorEl: null,
     todos: fromJS([]),
   };
 
@@ -96,13 +95,12 @@ class TodoList extends React.Component {
   };
 
   handleMenuItemClick = async (event, index) => {
-    this.setState({ selectedIndex: index, anchorEl: null });
+    this.setState({ selectedIndex: index});
     await updateTodo(this.state.selectedTodo, {'repeat': repeatOptions[index]});
     this.reloadTodos();
   };
 
   handleRepeatChange = async (e, todoId) => {
-    this.setState({anchorEl: null});
     await updateTodo(todoId, {repeat: e.target.value});
     this.reloadTodos();
   };
@@ -113,14 +111,13 @@ class TodoList extends React.Component {
   };
 
   handleNextReminderChange = async (todoId, date) => {
-    console.log('Date: ', date.toISOString());
     await updateTodo(todoId, {nextReminder: date.toISOString()});
     this.reloadTodos();
   };
 
   render() {
     const {classes} = this.props;
-    const {anchorEl, todos, order, orderBy} = this.state;
+    const {todos, order, orderBy} = this.state;
     return (
       <Paper className={classes.root}>
         <Toolbar onCreate={this.create}/>
@@ -142,7 +139,7 @@ class TodoList extends React.Component {
                     <ListItemText
                       primary={
                         <Typography className={n.complete ? classes.strikethru : null}>{n.headline}</Typography>
-                          }
+                      }
                       secondary={ !n.complete && (
                         <Grid container>
                           <Grid item xs>
