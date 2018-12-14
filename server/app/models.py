@@ -12,7 +12,7 @@ def connect():
 class Todo(Model):
     headline = CharField()
     created = DateField(default=dt.now())
-    next_reminder = DateField(null=True)
+    next_reminder = DateTimeField(null=True)
     note = CharField(null=True)
     repeat = CharField(null=True)
     complete = BooleanField(default=False)

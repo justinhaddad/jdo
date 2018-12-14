@@ -7,7 +7,7 @@ import Button from '@material-ui/core/Button';
 import Checkbox from '@material-ui/core/Checkbox';
 import DateFnsUtils from '@date-io/date-fns';
 import { MuiPickersUtilsProvider } from 'material-ui-pickers';
-import { DateTimePicker } from 'material-ui-pickers';
+import { InlineDateTimePicker } from 'material-ui-pickers';
 import Divider from '@material-ui/core/Divider';
 import DeleteIcon from '@material-ui/icons/Delete';
 import FormControl from '@material-ui/core/FormControl';
@@ -76,12 +76,14 @@ class TodoList extends React.Component {
     todos: fromJS([]),
   };
 
-  async reloadTodos() {
-    loadTodos(this.props.remindersOnly).then(data => this.setState({todos: fromJS(data)}));
+  reloadTodos = async () => {
+    const data = await loadTodos();
+    this.setState({todos: fromJS(data)});
   }
 
   componentDidMount() {
     this.reloadTodos();
+    setInterval(this.reloadTodos, 5000);
   }
 
   create = async headline => {
@@ -144,11 +146,13 @@ class TodoList extends React.Component {
                         <Grid container>
                           <Grid item xs>
                             <MuiPickersUtilsProvider utils={DateFnsUtils}>
-                              <DateTimePicker
+                              <InlineDateTimePicker
+                                keyboard
                                 value={n.nextReminder}
                                 onChange={date => this.handleNextReminderChange(n.id, date)}
                                 label="Next Reminder"
                                 showTodayButton
+                                format="MMM do h:ss a"
                               />
                             </MuiPickersUtilsProvider>
                             ({n.nextReminder ? Sugar.Date(n.nextReminder).relative().raw : 'Never'})

@@ -92,12 +92,14 @@ class Reminders extends React.Component {
     anchorEl: null,
   };
 
-  async reloadTodos() {
-    loadTodos(true).then(data => this.setState({todos: fromJS(data)}));
+  reloadTodos = async () => {
+    const data = await loadTodos(true);
+    this.setState({todos: fromJS(data)});
   }
 
   componentDidMount() {
     this.reloadTodos();
+    setInterval(this.reloadTodos, 5000);
   }
 
   handleSnooze = async e => {

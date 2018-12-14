@@ -36,7 +36,7 @@ function createWindow() {
   mainWindow.on("closed", () => (mainWindow = null));
 
   reminderWindow = new BrowserWindow({
-    width: 400, height: 780, parent: mainWindow,
+    width: 400, height: 780,
     title: 'Reminders', show: true,
   });
   reminderWindow.on("closed", () => (reminderWindow.hide()));
@@ -45,7 +45,7 @@ function createWindow() {
       ? "http://localhost:3000?reminders"
       : `file://${path.join(__dirname, "../build/index.html?reminders")}`
   );
-  // setInterval(checkReminders, 5000);
+  setInterval(checkReminders, 5000);
 
 }
 

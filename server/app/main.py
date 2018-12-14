@@ -1,5 +1,6 @@
 import datetime
 import re
+import sys
 
 import falcon
 import json
@@ -105,7 +106,7 @@ class TodoList:
     def on_get(self, req, resp):
         if req.get_param_as_bool('remindersOnly'):
             todos = Todo.select().where(
-                (Todo.next_reminder <= datetime.datetime.utcnow()) &
+                (Todo.next_reminder <= datetime.datetime.utcnow().isoformat()) &
                 (Todo.complete == 0))
         else:
             todos = Todo.select()
