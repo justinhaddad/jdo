@@ -1,9 +1,10 @@
 import Sugar from 'sugar-date';
 
-const URL = 'http://localhost:5005/todos';
+const TODO_URL = 'http://localhost:5005/todos';
+const SNOOZE_URL = 'http://localhost:5005/snooze-all';
 
 export const loadTodos = async (remindersOnly = false) => {
-  const url = `${URL}?remindersOnly=${remindersOnly}`;
+  const url = `${TODO_URL}?remindersOnly=${remindersOnly}`;
   const resp = await fetch(url, {
     // headers: {'Access-Control-Allow-Origin': '*'},
   });
@@ -24,7 +25,7 @@ export const createTodo = async headline => {
     todo['repeat'] = parts[2];
   }
   console.log('Todo: ', todo);
-  const resp = await fetch(URL, {
+  const resp = await fetch(TODO_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json; charset=utf-8',
@@ -35,17 +36,28 @@ export const createTodo = async headline => {
 };
 
 export const deleteTodo = async id => {
-  await fetch(`${URL}/${id}`, {
+  await fetch(`${TODO_URL}/${id}`, {
     method: 'DELETE',
   });
 };
 
 export const updateTodo = async (id, data) => {
-  await fetch(`${URL}/${id}`, {
+  await fetch(`${TODO_URL}/${id}`, {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json; charset=utf-8',
     },
     body: JSON.stringify(data),
+  });
+};
+
+export const snoozeAll = async seconds => {
+  const end = Sugar.Date.create(`in ${seconds} seconds`).toISOString();
+  await fetch(`${SNOOZE_URL}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json; charset=utf-8',
+    },
+    body: JSON.stringify({end}),
   });
 };

@@ -6,10 +6,15 @@ db = SqliteDatabase('/var/lib/jdo.db')
 
 def connect():
     db.connect()
-    db.create_tables([Todo])
+    db.create_tables([Todo, SnoozeAll])
 
 
-class Todo(Model):
+class BaseModel(Model):
+    class Meta:
+        database = db
+
+
+class Todo(BaseModel):
     headline = CharField()
     created = DateField(default=dt.now())
     next_reminder = DateTimeField(null=True)
@@ -18,5 +23,6 @@ class Todo(Model):
     complete = BooleanField(default=False)
     priority = IntegerField(null=True)
 
-    class Meta:
-        database = db
+
+class SnoozeAll(BaseModel):
+    end = DateTimeField(null=True)

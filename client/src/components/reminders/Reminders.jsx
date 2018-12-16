@@ -14,9 +14,12 @@ import Paper from '@material-ui/core/Paper';
 import Tooltip from '@material-ui/core/Tooltip';
 import Typography from '@material-ui/core/Typography';
 import {fromJS} from 'immutable';
-import {loadTodos, updateTodo} from '../../api';
+import {loadTodos, updateTodo, snoozeAll} from '../../api';
 import Popover from '@material-ui/core/Popover';
 import Sugar from 'sugar-date';
+import Toolbar from '../toolbar/Toolbar';
+
+const remote = window.require('electron').remote;
 
 const snoozeOptions = {
   '5m': 'in 5 minutes',
@@ -95,7 +98,10 @@ class Reminders extends React.Component {
   reloadTodos = async () => {
     const data = await loadTodos(true);
     this.setState({todos: fromJS(data)});
-  }
+    if(data.length == 0) {
+      remote.getCurrentWindow().hide();
+    }
+  };
 
   componentDidMount() {
     this.reloadTodos();
@@ -103,7 +109,6 @@ class Reminders extends React.Component {
   }
 
   handleSnooze = async e => {
-    console.log('Snoozing ', this.state.selected);
     this.hideSnoozePopover();
     const next = Sugar.Date.create(e.currentTarget.value);
     await updateTodo(this.state.selected, {nextReminder: next.toISOString()});
@@ -119,12 +124,17 @@ class Reminders extends React.Component {
     this.reloadTodos();
   };
 
+  handleSnoozeAll = () => {
+    snoozeAll(10);
+  };
+
   render() {
     const {classes} = this.props;
     const {todos, order, orderBy, anchorEl} = this.state;
     const open = Boolean(anchorEl);
     return (
       <Paper className={classes.root}>
+        <Toolbar onSnoozeAll={this.handleSnoozeAll}/>
         <List className={classes.root}>
           {stableSort(todos.toJS(), getSorting(order, orderBy))
             .map(n => {

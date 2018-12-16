@@ -1,4 +1,5 @@
 import datetime
+from datetime import datetime as dt
 import re
 import sys
 
@@ -9,7 +10,7 @@ from peewee import IntegrityError
 from playhouse.shortcuts import model_to_dict
 from wsgiref import simple_server
 
-from models import Todo
+from models import Todo, SnoozeAll
 import models
 
 count = 0
@@ -35,7 +36,7 @@ log = get_module_logger(__name__)
 
 class Encoder(json.JSONEncoder):
     def default(self, obj):
-        if isinstance(obj, datetime.datetime):
+        if isinstance(obj, dt):
             return obj.isoformat()
         elif isinstance(obj, datetime.date):
             return obj.isoformat()
@@ -105,9 +106,13 @@ class CamelSnake:
 class TodoList:
     def on_get(self, req, resp):
         if req.get_param_as_bool('remindersOnly'):
-            todos = Todo.select().where(
-                (Todo.next_reminder <= datetime.datetime.utcnow().isoformat()) &
-                (Todo.complete == 0))
+            if not SnoozeAll.select().where(
+                    SnoozeAll.end < dt.utcnow().isoformat()).count():
+                todos = []
+            else:
+                todos = Todo.select().where(
+                    (Todo.next_reminder <= dt.utcnow().isoformat()) &
+                    (Todo.complete == 0))
         else:
             todos = Todo.select()
         ret = []
@@ -142,9 +147,25 @@ class TodoItem:
         resp.body = json.dumps(model_to_dict(todo), cls=Encoder)
 
 
+class SnoozeAllItem:
+    def on_post(self, req, resp):
+        data = req.context['body']
+        if not SnoozeAll.update(**data).execute():
+            SnoozeAll.create(**data)
+        data = SnoozeAll.select().get()
+        sys.stderr.write(f'DATA: {data}')
+        resp.body = json.dumps(model_to_dict(data), cls=Encoder)
+        resp.status = falcon.HTTP_201
+
+    def on_get(self, req, resp):
+        data = SnoozeAll.select()
+        resp.body = json.dumps(model_to_dict(data), cls=Encoder)
+
+
 api = application = falcon.API(middleware=[CORSComponent(), CamelSnake()])
 api.add_route('/todos', TodoList())
 api.add_route('/todos/{id}', TodoItem())
+api.add_route('/snooze-all', SnoozeAllItem())
 
 if __name__ == '__main__':
     httpd = simple_server.make_server('127.0.0.1', 5005, api)

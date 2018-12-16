@@ -1,9 +1,7 @@
 const electron = require("electron");
 const app = electron.app;
 const BrowserWindow = electron.BrowserWindow;
-//require('whatwg-fetch');
 const axios = require("axios");
-
 const path = require("path");
 const isDev = require("electron-is-dev");
 
@@ -27,7 +25,7 @@ function checkReminders() {
 }
 
 function createWindow() {
-  mainWindow = new BrowserWindow({ width: 900, height: 680, title: 'JDO' });
+  mainWindow = new BrowserWindow({ width: 900, height: 680, title: 'JDO - Tasks' });
   mainWindow.loadURL(
     isDev
       ? "http://localhost:3000?todos"
@@ -36,8 +34,8 @@ function createWindow() {
   mainWindow.on("closed", () => (mainWindow = null));
 
   reminderWindow = new BrowserWindow({
-    width: 400, height: 780,
-    title: 'Reminders', show: true,
+    width: 400, height: 780, x: 0, y: 0,
+    title: 'JDO - Reminders', show: true,
   });
   reminderWindow.on("closed", () => (reminderWindow.hide()));
   reminderWindow.loadURL(
@@ -46,7 +44,6 @@ function createWindow() {
       : `file://${path.join(__dirname, "../build/index.html?reminders")}`
   );
   setInterval(checkReminders, 5000);
-
 }
 
 app.on("ready", createWindow);

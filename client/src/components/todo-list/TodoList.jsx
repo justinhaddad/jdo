@@ -25,6 +25,8 @@ import Typography from '@material-ui/core/Typography';
 
 import {createTodo, deleteTodo, loadTodos, updateTodo} from '../../api';
 
+const remote = window.require('electron').remote;
+
 String.prototype.capitalize = function() {
   return this.charAt(0).toUpperCase() + this.slice(1);
 };
@@ -79,7 +81,10 @@ class TodoList extends React.Component {
   reloadTodos = async () => {
     const data = await loadTodos();
     this.setState({todos: fromJS(data)});
-  }
+    if(data.length == 0) {
+      remote.getCurrentWindow().hide();
+    }
+  };
 
   componentDidMount() {
     this.reloadTodos();
