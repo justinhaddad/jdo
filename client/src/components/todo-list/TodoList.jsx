@@ -1,9 +1,7 @@
 import React from 'react';
 import {fromJS} from 'immutable';
-import classNames from 'classnames';
 import PropTypes from 'prop-types';
 import {withStyles} from '@material-ui/core/styles';
-import Button from '@material-ui/core/Button';
 import Checkbox from '@material-ui/core/Checkbox';
 import DateFnsUtils from '@date-io/date-fns';
 import { MuiPickersUtilsProvider } from 'material-ui-pickers';
@@ -25,7 +23,7 @@ import Typography from '@material-ui/core/Typography';
 
 import {createTodo, deleteTodo, loadTodos, updateTodo} from '../../api';
 
-const remote = window.require('electron').remote;
+// const remote = window.require('electron').remote;
 
 String.prototype.capitalize = function() {
   return this.charAt(0).toUpperCase() + this.slice(1);
@@ -81,9 +79,9 @@ class TodoList extends React.Component {
   reloadTodos = async () => {
     const data = await loadTodos();
     this.setState({todos: fromJS(data)});
-    if(data.length == 0) {
-      remote.getCurrentWindow().hide();
-    }
+    // if(data.length == 0) {
+    //   remote.getCurrentWindow().hide();
+    // }
   };
 
   componentDidMount() {
@@ -126,8 +124,9 @@ class TodoList extends React.Component {
     const {classes} = this.props;
     const {todos, order, orderBy} = this.state;
     return (
-      <Paper className={classes.root}>
+      <React.Fragment>
         <Toolbar onCreate={this.create}/>
+        <Paper className={classes.root}>
         <List className={classes.root}>
           {stableSort(todos.toJS(), getSorting(order, orderBy))
             .map(n => {
@@ -195,7 +194,8 @@ class TodoList extends React.Component {
               );
             })}
         </List>
-      </Paper>
+        </Paper>
+      </React.Fragment>
     );
   }
 }

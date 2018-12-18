@@ -93,6 +93,8 @@ class Reminders extends React.Component {
   state = {
     todos: fromJS([]),
     anchorEl: null,
+    orderBy: 'nextReminder',
+    order: 'desc',
   };
 
   reloadTodos = async () => {
@@ -133,8 +135,9 @@ class Reminders extends React.Component {
     const {todos, order, orderBy, anchorEl} = this.state;
     const open = Boolean(anchorEl);
     return (
-      <Paper className={classes.root}>
+      <React.Fragment>
         <Toolbar onSnoozeAll={this.handleSnoozeAll}/>
+        <Paper className={classes.root}>
         <List className={classes.root}>
           {stableSort(todos.toJS(), getSorting(order, orderBy))
             .map(n => {
@@ -197,6 +200,7 @@ class Reminders extends React.Component {
           ))}
         </Popover>
       </Paper>
+      </React.Fragment>
     );
   }
 }

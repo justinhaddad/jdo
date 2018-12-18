@@ -6,12 +6,16 @@ db = SqliteDatabase('/var/lib/jdo.db')
 
 def connect():
     db.connect()
-    db.create_tables([Todo, SnoozeAll])
+    db.create_tables([Todo, TodoList, SnoozeAll])
 
 
 class BaseModel(Model):
     class Meta:
         database = db
+
+
+class TodoList(BaseModel):
+    name = CharField()
 
 
 class Todo(BaseModel):
@@ -22,6 +26,7 @@ class Todo(BaseModel):
     repeat = CharField(null=True)
     complete = BooleanField(default=False)
     priority = IntegerField(null=True)
+    list = ForeignKeyField(TodoList, backref='todos')
 
 
 class SnoozeAll(BaseModel):

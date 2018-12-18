@@ -3,6 +3,7 @@ import classNames from 'classnames';
 import PropTypes from 'prop-types';
 
 import AddIcon from '@material-ui/icons/Add';
+import AppBar from '@material-ui/core/AppBar';
 import Button from '@material-ui/core/Button';
 import TextField from '@material-ui/core/TextField';
 import IconButton from '@material-ui/core/IconButton';
@@ -41,6 +42,10 @@ const toolbarStyles = theme => ({
   addBox: {
     width: 500,
   },
+  bar: {
+    marginBottom: 0,
+    height: 80,
+  },
 });
 
 class EnhancedTableToolbar extends React.Component {
@@ -60,7 +65,7 @@ class EnhancedTableToolbar extends React.Component {
   };
 
   snooze = () => {
-    snoozeAll(10);
+    snoozeAll(300);
     console.log('Hiding window.', remote.getCurrentWindow().getTitle());
     remote.getCurrentWindow().hide();
   };
@@ -70,6 +75,8 @@ class EnhancedTableToolbar extends React.Component {
     const {headline} = this.state;
 
     return (
+      <div className={classes.bar}>
+      <AppBar position="fixed" className={classes.bar}>
       <Toolbar
         className={classNames(classes.root, {
           [classes.highlight]: numSelected > 0,
@@ -107,6 +114,8 @@ class EnhancedTableToolbar extends React.Component {
           <Button onClick={this.snooze}>Snooze</Button>
         </div>
       </Toolbar>
+      </AppBar>
+      </div>
     );
   }
 }

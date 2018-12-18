@@ -10,9 +10,10 @@ from peewee import IntegrityError
 from playhouse.shortcuts import model_to_dict
 from wsgiref import simple_server
 
-from models import Todo, SnoozeAll
+from models import Todo, SnoozeAll, TodoList
 import models
 
+DEFAULT_LIST = 'Reminders';
 count = 0
 models.connect()
 
@@ -103,7 +104,7 @@ class CamelSnake:
             resp.body = json.dumps(new_body)
 
 
-class TodoList:
+class Todos:
     def on_get(self, req, resp):
         if req.get_param_as_bool('remindersOnly'):
             if not SnoozeAll.select().where(
@@ -127,7 +128,8 @@ class TodoList:
             return
         data = req.context['body']
         try:
-            t = Todo.create(**data)
+            list, created = TodoList.get_or_create(name=DEFAULT_LIST)
+            t = Todo.create(list=list, **data)
             resp.body = json.dumps(model_to_dict(t), cls=Encoder)
             resp.status = falcon.HTTP_201
         except IntegrityError as e:
@@ -163,7 +165,7 @@ class SnoozeAllItem:
 
 
 api = application = falcon.API(middleware=[CORSComponent(), CamelSnake()])
-api.add_route('/todos', TodoList())
+api.add_route('/todos', Todos())
 api.add_route('/todos/{id}', TodoItem())
 api.add_route('/snooze-all', SnoozeAllItem())
 
