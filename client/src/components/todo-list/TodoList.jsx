@@ -30,8 +30,8 @@ String.prototype.capitalize = function() {
 };
 
 const repeatOptions = [
-  'never', 'daily', 'weekly', 'hourly', 'monthly', 'weekdays', 'mondays', 'tuesdays', 'wednesdays',
-  'thursdays', 'fridays'
+  'never', 'daily', 'weekly', 'hourly', 'monthly', 'sundays', 'mondays', 'tuesdays', 'wednesdays',
+  'thursdays', 'fridays', 'saturdays'
 ];
 
 function desc(a, b, orderBy) {
@@ -69,11 +69,16 @@ const styles = theme => ({
   strikethru: {
     textDecoration: 'line-through',
   },
+  repeats: {
+    fontSize: 12,
+  },
 });
 
 class TodoList extends React.Component {
   state = {
     todos: fromJS([]),
+    orderBy: 'nextReminder',
+    order: 'desc',
   };
 
   reloadTodos = async () => {
@@ -100,8 +105,8 @@ class TodoList extends React.Component {
   };
 
   handleMenuItemClick = async (event, index) => {
-    this.setState({ selectedIndex: index});
-    await updateTodo(this.state.selectedTodo, {'repeat': repeatOptions[index]});
+    this.setState({selectedIndex: index});
+    await updateTodo(this.state.selectedTodo, {repeat: repeatOptions[index]});
     this.reloadTodos();
   };
 
@@ -175,7 +180,8 @@ class TodoList extends React.Component {
                                 }}
                               >
                                 {repeatOptions.map(option => (
-                                  <MenuItem value={option}>{option.capitalize()}</MenuItem>
+                                  <MenuItem className={classes.repeats}
+                                            value={option}>{option.capitalize()}</MenuItem>
                                 ))}
                               </Select>
                             </FormControl>

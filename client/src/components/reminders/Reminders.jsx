@@ -14,7 +14,7 @@ import Paper from '@material-ui/core/Paper';
 import Tooltip from '@material-ui/core/Tooltip';
 import Typography from '@material-ui/core/Typography';
 import {fromJS} from 'immutable';
-import {loadTodos, updateTodo, snoozeAll} from '../../api';
+import {createTodo, loadTodos, updateTodo, snoozeAll} from '../../api';
 import Popover from '@material-ui/core/Popover';
 import Sugar from 'sugar-date';
 import Toolbar from '../toolbar/Toolbar';
@@ -49,6 +49,22 @@ const snoozeOptions = {
   'F': 'Friday at noon',
   'Sa': 'Saturday at noon',
 };
+
+const repeatSugar = {
+  'hourly': 'in an hour',
+  'daily': 'tomorrow at noon',
+  'nightly': 'tomorrow at 4pm',
+  'weekly': 'next Sunday',
+  'monthly': 'the beginning of next month',
+  'sundays': 'next Sunday',
+  'mondays': 'next Monday',
+  'tuesdays': 'next Tuesday',
+  'wednesdays': 'next Wednesday',
+  'thursdays': 'next Thursday',
+  'fridays': 'next Friday',
+  'saturdays': 'next Saturday',
+};
+
 const styles = theme => ({
   root: {
     width: '100%',
@@ -95,12 +111,13 @@ class Reminders extends React.Component {
     anchorEl: null,
     orderBy: 'nextReminder',
     order: 'desc',
+    searchTxt: null,
   };
 
   reloadTodos = async () => {
-    const data = await loadTodos(true);
-    this.setState({todos: fromJS(data)});
-    if(data.length == 0) {
+    let todos = await loadTodos(true);
+    this.setState({todos: fromJS(todos)});
+    if(todos.length == 0) {
       remote.getCurrentWindow().hide();
     }
   };
@@ -123,6 +140,20 @@ class Reminders extends React.Component {
 
   handleToggleComplete = async (todoId, current) => {
     await updateTodo(todoId, {complete: !current});
+    // Create a new todo if repeat is set.
+    const todo = this.state.todos.toJS().filter(t => t.id === todoId)[0];
+    if(!current && todo.repeat) {
+      const dup = {
+        created: todo.created,
+        headline: todo.headline,
+        note: todo.note,
+        priority: todo.priority,
+        nextReminder: Sugar.Date.create(repeatSugar[todo.repeat]).toISOString(),
+        repeat: todo.repeat,
+      };
+      console.log('UPDATE: ', dup);
+      await createTodo(dup);
+    }
     this.reloadTodos();
   };
 
@@ -130,16 +161,26 @@ class Reminders extends React.Component {
     snoozeAll(10);
   };
 
+  handleSearch = searchTxt => {
+    const {todos} = this.state;
+    if(searchTxt) {
+      const filtered = todos.toJS().filter(t => t.headline.toLowerCase().includes(searchTxt.toLowerCase()));
+      this.setState({filtered});
+    } else {
+      this.setState({filtered: null});
+    }
+  };
+
   render() {
     const {classes} = this.props;
-    const {todos, order, orderBy, anchorEl} = this.state;
+    const {todos, filtered, order, orderBy, anchorEl} = this.state;
     const open = Boolean(anchorEl);
     return (
       <React.Fragment>
-        <Toolbar onSnoozeAll={this.handleSnoozeAll}/>
+        <Toolbar onSnoozeAll={this.handleSnoozeAll} onSearch={this.handleSearch}/>
         <Paper className={classes.root}>
         <List className={classes.root}>
-          {stableSort(todos.toJS(), getSorting(order, orderBy))
+          {stableSort(filtered || todos.toJS(), getSorting(order, orderBy))
             .map(n => {
               return (
                 <React.Fragment>

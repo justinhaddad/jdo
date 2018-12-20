@@ -12,19 +12,22 @@ export const loadTodos = async (remindersOnly = false) => {
   return data.data;
 };
 
-export const createTodo = async headline => {
-  const parts = headline.split(';').map(s => s.trim());
-  const todo = {
-    headline: parts[0],
-  };
-  if(parts.length > 1) {
-    const nextReminder = Sugar.Date.create(parts[1]);
-    todo['nextReminder'] = nextReminder.toISOString();
+export const createTodo = async arg => {
+  let todo = arg;
+  if(typeof(arg) === 'string') {
+    const parts = arg.split(';').map(s => s.trim());
+    todo = {
+      headline: parts[0],
+    };
+    if (parts.length > 1) {
+      const nextReminder = Sugar.Date.create(parts[1]);
+      todo.nextReminder = nextReminder.toISOString();
+    }
+    if (parts.length > 2) {
+      todo['repeat'] = parts[2];
+    }
   }
-  if(parts.length > 2) {
-    todo['repeat'] = parts[2];
-  }
-  console.log('Todo: ', todo);
+  console.log('Creating Todo: ', todo);
   const resp = await fetch(TODO_URL, {
     method: 'POST',
     headers: {
