@@ -176,7 +176,8 @@ class Reminders extends React.Component {
     const open = Boolean(anchorEl);
     return (
       <React.Fragment>
-        <Toolbar onSnoozeAll={this.handleSnoozeAll} onSearch={this.handleSearch}/>
+        <Toolbar onSnoozeAll={this.handleSnoozeAll} onSearch={this.handleSearch}
+                 count={todos.size} />
         <Paper className={classes.root}>
         <List className={classes.root}>
           {stableSort(filtered || todos.toJS(), getSorting(order, orderBy))

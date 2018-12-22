@@ -15,7 +15,7 @@ class BaseModel(Model):
 
 
 class TodoList(BaseModel):
-    name = CharField()
+    name = CharField(unique=True)
 
 
 class Todo(BaseModel):

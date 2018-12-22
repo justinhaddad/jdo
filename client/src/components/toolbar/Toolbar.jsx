@@ -1,17 +1,17 @@
 import React from 'react';
-import classNames from 'classnames';
 import PropTypes from 'prop-types';
 
 import AddIcon from '@material-ui/icons/Add';
 import AppBar from '@material-ui/core/AppBar';
+import ClearIcon from '@material-ui/icons/Clear';
 import { fade } from '@material-ui/core/styles/colorManipulator';
 import IconButton from '@material-ui/core/IconButton';
 import InputAdornment from '@material-ui/core/InputAdornment';
 import InputBase from '@material-ui/core/InputBase';
 import SearchIcon from '@material-ui/icons/Search';
 import SnoozeIcon from '@material-ui/icons/Snooze';
-import TextField from '@material-ui/core/TextField';
 import Toolbar from '@material-ui/core/Toolbar';
+import Typography from '@material-ui/core/Typography';
 
 import {withStyles} from '@material-ui/core/styles/index';
 import {lighten} from '@material-ui/core/styles/colorManipulator';
@@ -76,7 +76,7 @@ const toolbarStyles = theme => ({
     color: 'inherit',
     width: '100%',
   },
-  inputInput: {
+  addInput: {
     paddingTop: theme.spacing.unit,
     paddingRight: theme.spacing.unit,
     paddingBottom: theme.spacing.unit,
@@ -84,17 +84,38 @@ const toolbarStyles = theme => ({
     transition: theme.transitions.create('width'),
     width: '100%',
     [theme.breakpoints.up('sm')]: {
-      width: 50,
+      width: 200,
       '&:focus': {
-        width: 200,
+        width: 300,
       },
     },
   },
+  searchInput: {
+    paddingTop: theme.spacing.unit,
+    paddingRight: theme.spacing.unit,
+    paddingBottom: theme.spacing.unit,
+    paddingLeft: theme.spacing.unit * 5,
+    transition: theme.transitions.create('width'),
+    width: '100%',
+    [theme.breakpoints.up('sm')]: {
+      width: 100,
+      '&:focus': {
+        width: 300,
+      },
+    },
+  },
+  barText: {
+    color: 'white',
+  },
+  info: {
+    width: 300,
+  }
 });
 
 class EnhancedTableToolbar extends React.Component {
   state = {
-    headline: ''
+    headline: '',
+    searchText: '',
   };
 
   handleCreate = () => {
@@ -115,21 +136,26 @@ class EnhancedTableToolbar extends React.Component {
   };
 
   onSearch = e => {
+    this.setState({searchText: e.target.value});
     this.props.onSearch(e.target.value);
   };
 
+  clearSearch = () => {
+    this.setState({searchText: ''});
+    this.props.onSearch('');
+  };
+
   render() {
-    const {numSelected, classes, onCreate, showSnooze} = this.props;
-    const {headline} = this.state;
+    const {classes, onCreate, showSnooze, count} = this.props;
+    const {headline, searchText} = this.state;
 
     return (
       <div className={classes.bar}>
       <AppBar position="fixed" className={classes.bar}>
-      <Toolbar
-        className={classNames(classes.root, {
-          [classes.highlight]: numSelected > 0,
-        })}
-      >
+      <Toolbar className={classes.root}>
+        <div className={classes.info}>
+          <Typography variant="h6" className={classes.barText}>Total: {count}</Typography>
+        </div>
         {onCreate &&
           <div className={classes.search}>
             <div className={classes.searchIcon}>
@@ -139,7 +165,7 @@ class EnhancedTableToolbar extends React.Component {
               placeholder="New Todo…"
               classes={{
                 root: classes.inputRoot,
-                input: classes.inputInput,
+                input: classes.addInput,
               }}
               value={headline}
               onChange={e => this.setState({headline: e.target.value})}
@@ -156,16 +182,27 @@ class EnhancedTableToolbar extends React.Component {
             placeholder="Search…"
             classes={{
               root: classes.inputRoot,
-              input: classes.inputInput,
+              input: classes.searchInput,
             }}
+            value={searchText}
             onChange={this.onSearch}
+            endAdornment={
+              <InputAdornment position="end">
+                <IconButton
+                  aria-label="Clear search"
+                  onClick={this.clearSearch}
+                >
+                  <ClearIcon className={classes.barText}/>
+                </IconButton>
+              </InputAdornment>
+            }
           />
         </div>
         <div className={classes.actions}>
           {showSnooze &&
             <IconButton aria-label="Snooze"
                         onClick={this.snooze}>
-              <SnoozeIcon/>
+              <SnoozeIcon className={classes.barText}/>
             </IconButton>
           }
         </div>

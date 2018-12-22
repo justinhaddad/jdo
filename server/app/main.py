@@ -107,8 +107,8 @@ class CamelSnake:
 class Todos:
     def on_get(self, req, resp):
         if req.get_param_as_bool('remindersOnly'):
-            if not SnoozeAll.select().where(
-                    SnoozeAll.end < dt.utcnow().isoformat()).count():
+            if SnoozeAll.select().where(
+                    SnoozeAll.end < dt.utcnow().isoformat()).count() == 0:
                 todos = []
             else:
                 todos = Todo.select().where(
