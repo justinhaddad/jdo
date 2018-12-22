@@ -64,7 +64,7 @@ const toolbarStyles = theme => ({
     },
   },
   searchIcon: {
-    width: theme.spacing.unit * 9,
+    width: theme.spacing.unit * 5 ,
     height: '100%',
     position: 'absolute',
     pointerEvents: 'none',
@@ -80,11 +80,11 @@ const toolbarStyles = theme => ({
     paddingTop: theme.spacing.unit,
     paddingRight: theme.spacing.unit,
     paddingBottom: theme.spacing.unit,
-    paddingLeft: theme.spacing.unit * 10,
+    paddingLeft: theme.spacing.unit * 5,
     transition: theme.transitions.create('width'),
     width: '100%',
     [theme.breakpoints.up('sm')]: {
-      width: 120,
+      width: 50,
       '&:focus': {
         width: 200,
       },
@@ -115,12 +115,11 @@ class EnhancedTableToolbar extends React.Component {
   };
 
   onSearch = e => {
-    console.log('Searching for ', e.target.value);
     this.props.onSearch(e.target.value);
   };
 
   render() {
-    const {numSelected, classes, onCreate} = this.props;
+    const {numSelected, classes, onCreate, showSnooze} = this.props;
     const {headline} = this.state;
 
     return (
@@ -132,32 +131,23 @@ class EnhancedTableToolbar extends React.Component {
         })}
       >
         {onCreate &&
-          <div className={classes.title}>
-            <TextField
-              id="outlined-with-placeholder"
-              label="New Reminder"
-              className={classes.addBox}
-              margin="normal"
-              variant="outlined"
+          <div className={classes.search}>
+            <div className={classes.searchIcon}>
+              <AddIcon />
+            </div>
+            <InputBase
+              placeholder="New Todo…"
+              classes={{
+                root: classes.inputRoot,
+                input: classes.inputInput,
+              }}
               value={headline}
               onChange={e => this.setState({headline: e.target.value})}
               onKeyPress={this.catchReturn}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      aria-label="Add new jdo"
-                      onClick={this.handleCreate}
-                      disabled={!headline}
-                    >
-                      <AddIcon/>
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
             />
           </div>
         }
+        <div className={classes.spacer}/>
         <div className={classes.search}>
           <div className={classes.searchIcon}>
             <SearchIcon />
@@ -171,12 +161,13 @@ class EnhancedTableToolbar extends React.Component {
             onChange={this.onSearch}
           />
         </div>
-        <div className={classes.spacer}/>
         <div className={classes.actions}>
-          <IconButton aria-label="Snooze"
-                      onClick={this.snooze}>
-            <SnoozeIcon/>
-          </IconButton>
+          {showSnooze &&
+            <IconButton aria-label="Snooze"
+                        onClick={this.snooze}>
+              <SnoozeIcon/>
+            </IconButton>
+          }
         </div>
       </Toolbar>
       </AppBar>
@@ -187,6 +178,12 @@ class EnhancedTableToolbar extends React.Component {
 
 EnhancedTableToolbar.propTypes = {
   classes: PropTypes.object.isRequired,
+  showSnooze: PropTypes.bool,
 };
+
+EnhancedTableToolbar.defaultProps = {
+  showSnooze: true,
+};
+
 
 export default withStyles(toolbarStyles)(EnhancedTableToolbar);

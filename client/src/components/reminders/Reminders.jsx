@@ -151,7 +151,6 @@ class Reminders extends React.Component {
         nextReminder: Sugar.Date.create(repeatSugar[todo.repeat]).toISOString(),
         repeat: todo.repeat,
       };
-      console.log('UPDATE: ', dup);
       await createTodo(dup);
     }
     this.reloadTodos();

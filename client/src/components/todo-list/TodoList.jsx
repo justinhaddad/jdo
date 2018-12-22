@@ -14,11 +14,14 @@ import IconButton from '@material-ui/core/IconButton';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
+import LoopIcon from '@material-ui/icons/Loop';
 import MenuItem from '@material-ui/core/MenuItem';
+import NotificationsIcon from '@material-ui/icons/Notifications';
 import Paper from '@material-ui/core/Paper';
 import Select from '@material-ui/core/Select';
 import Sugar from 'sugar-date';
 import Toolbar from '../toolbar';
+import Tooltip from '@material-ui/core/Tooltip';
 import Typography from '@material-ui/core/Typography';
 
 import {createTodo, deleteTodo, loadTodos, updateTodo} from '../../api';
@@ -69,8 +72,16 @@ const styles = theme => ({
   strikethru: {
     textDecoration: 'line-through',
   },
+  repeatSelect: {
+    width: 100,
+  },
   repeats: {
-    fontSize: 12,
+    fontSize: 10,
+  },
+  icon: {
+    fontSize: 20,
+    marginTop: 10,
+    marginRight: 10,
   },
 });
 
@@ -125,15 +136,25 @@ class TodoList extends React.Component {
     this.reloadTodos();
   };
 
+  handleSearch = searchTxt => {
+    const {todos} = this.state;
+    if(searchTxt) {
+      const filtered = todos.toJS().filter(t => t.headline.toLowerCase().includes(searchTxt.toLowerCase()));
+      this.setState({filtered});
+    } else {
+      this.setState({filtered: null});
+    }
+  };
+
   render() {
     const {classes} = this.props;
-    const {todos, order, orderBy} = this.state;
+    const {todos, filtered, order, orderBy} = this.state;
     return (
       <React.Fragment>
-        <Toolbar onCreate={this.create}/>
+        <Toolbar onCreate={this.create} onSearch={this.handleSearch} showSnooze={false} />
         <Paper className={classes.root}>
         <List className={classes.root}>
-          {stableSort(todos.toJS(), getSorting(order, orderBy))
+          {stableSort(filtered || todos.toJS(), getSorting(order, orderBy))
             .map(n => {
               return (
                 <React.Fragment>
@@ -149,29 +170,33 @@ class TodoList extends React.Component {
                     />
                     <ListItemText
                       primary={
-                        <Typography className={n.complete ? classes.strikethru : null}>{n.headline}</Typography>
+                        <Typography className={n.complete ? classes.strikethru : null}
+                                    variant="subtitle2"
+                        >
+                          {n.headline}
+                        </Typography>
                       }
                       secondary={ !n.complete && (
                         <Grid container>
                           <Grid item xs>
+                            <Tooltip title={n.nextReminder ? Sugar.Date(n.nextReminder).relative().raw : null}>
+                              <NotificationsIcon className={classes.icon} />
+                            </Tooltip>
                             <MuiPickersUtilsProvider utils={DateFnsUtils}>
                               <InlineDateTimePicker
                                 keyboard
                                 value={n.nextReminder}
                                 onChange={date => this.handleNextReminderChange(n.id, date)}
-                                label="Next Reminder"
+                                label={null}
                                 showTodayButton
                                 format="MMM do h:ss a"
                               />
                             </MuiPickersUtilsProvider>
-                            ({n.nextReminder ? Sugar.Date(n.nextReminder).relative().raw : 'Never'})
                           </Grid>
                           <Grid item xs>
-                            <Typography component="span" className={classes.inline} color="textSecondary">
-                              Repeats:
-                            </Typography>
+                            <LoopIcon className={classes.icon} />
                             <FormControl className={classes.formControl}>
-                              <Select
+                              <Select className={classes.repeatSelect}
                                 value={n.repeat}
                                 onChange={e => this.handleRepeatChange(e, n.id)}
                                 inputProps={{
