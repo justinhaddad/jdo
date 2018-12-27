@@ -25,7 +25,7 @@ class Todo(BaseModel):
     note = CharField(null=True)
     repeat = CharField(null=True)
     complete = BooleanField(default=False)
-    completedOn = DateTimeField(null=True)
+    completed_on = DateTimeField(null=True)
     priority = IntegerField(null=True)
     list = ForeignKeyField(TodoList, backref='todos')
 

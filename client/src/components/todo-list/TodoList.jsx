@@ -5,10 +5,11 @@ import PropTypes from 'prop-types';
 import {withStyles} from '@material-ui/core/styles';
 import Checkbox from '@material-ui/core/Checkbox';
 import DateFnsUtils from '@date-io/date-fns';
-import {MuiPickersUtilsProvider} from 'material-ui-pickers';
 import {InlineDateTimePicker} from 'material-ui-pickers';
 import Divider from '@material-ui/core/Divider';
 import DeleteIcon from '@material-ui/icons/Delete';
+import EditIcon from '@material-ui/icons/Edit';
+import EditTodoDialog from '../edit-dialog';
 import FormControl from '@material-ui/core/FormControl';
 import Grid from '@material-ui/core/Grid';
 import IconButton from '@material-ui/core/IconButton';
@@ -17,8 +18,10 @@ import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
 import LoopIcon from '@material-ui/icons/Loop';
 import MenuItem from '@material-ui/core/MenuItem';
+import {MuiPickersUtilsProvider} from 'material-ui-pickers';
 import NotificationsIcon from '@material-ui/icons/Notifications';
 import Paper from '@material-ui/core/Paper';
+import {repeatOptions} from '../constants';
 import Select from '@material-ui/core/Select';
 import Sugar from 'sugar-date';
 import Toolbar from '../toolbar';
@@ -26,6 +29,7 @@ import Tooltip from '@material-ui/core/Tooltip';
 import Typography from '@material-ui/core/Typography';
 
 import {createTodo, deleteTodo, loadTodos, updateTodo} from '../../api';
+import BaseTodoList from '../BaseTodoList';
 
 // const remote = window.require('electron').remote;
 
@@ -33,10 +37,6 @@ String.prototype.capitalize = function () {
   return this.charAt(0).toUpperCase() + this.slice(1);
 };
 
-const repeatOptions = [
-  'never', 'daily', 'weekly', 'hourly', 'monthly', 'yearly',
-  'sundays', 'mondays', 'tuesdays', 'wednesdays', 'thursdays', 'fridays', 'saturdays'
-];
 
 function desc(a, b, orderBy) {
   if (b[orderBy] < a[orderBy]) {
@@ -84,35 +84,21 @@ const styles = theme => ({
     marginTop: 10,
     marginRight: 10,
   },
+  editControl: {
+    padding: 3,
+  }
 });
 
-class TodoList extends React.Component {
+class TodoList extends BaseTodoList {
   state = {
     todos: fromJS([]),
     orderBy: 'nextReminder',
     order: 'desc',
+    editing: false,
   };
-
-  reloadTodos = async () => {
-    const data = await loadTodos();
-    this.setState({todos: fromJS(data)});
-    // if(data.length == 0) {
-    //   remote.getCurrentWindow().hide();
-    // }
-  };
-
-  componentDidMount() {
-    this.reloadTodos();
-    setInterval(this.reloadTodos, 5000);
-  }
 
   create = async headline => {
     await createTodo(headline);
-    this.reloadTodos();
-  };
-
-  delete = async id => {
-    await deleteTodo(id);
     this.reloadTodos();
   };
 
@@ -127,29 +113,14 @@ class TodoList extends React.Component {
     this.reloadTodos();
   };
 
-  handleToggleComplete = async (todoId, current) => {
-    await updateTodo(todoId, {complete: !current});
-    this.reloadTodos();
-  };
-
   handleNextReminderChange = async (todoId, date) => {
     await updateTodo(todoId, {nextReminder: date.toISOString()});
     this.reloadTodos();
   };
 
-  handleSearch = debounce(searchTxt => {
-    const {todos} = this.state;
-    if (searchTxt) {
-      const filtered = todos.toJS().filter(t => t.headline.toLowerCase().includes(searchTxt.toLowerCase()));
-      this.setState({filtered});
-    } else {
-      this.setState({filtered: null});
-    }
-  }, 500);
-
   render() {
     const {classes} = this.props;
-    const {todos, filtered, order, orderBy} = this.state;
+    const {todos, filtered, order, orderBy, editing} = this.state;
     return (
       <React.Fragment>
         <Toolbar onCreate={this.create} onSearch={this.handleSearch} showSnooze={false}
@@ -166,7 +137,7 @@ class TodoList extends React.Component {
                     >
                       <Grid container>
                         <Grid xs={1}>
-                          <Checkbox
+                          <Checkbox className={classes.editControl}
                             checked={n.complete}
                             tabIndex={-1}
                             disableRipple
@@ -212,7 +183,12 @@ class TodoList extends React.Component {
                               ))}
                             </Select>
                           </FormControl>
-                          <IconButton aria-label="Delete" onClick={() => this.delete(n.id)}>
+                          <IconButton aria-label="Edit" className={classes.editControl}
+                                      onClick={e => this.setState({editing: n})}>
+                            <EditIcon/>
+                          </IconButton>
+                          <IconButton aria-label="Delete" className={classes.editControl}
+                                      onClick={() => this.handleDelete(n.id)}>
                             <DeleteIcon/>
                           </IconButton>
                         </Grid>
@@ -225,6 +201,10 @@ class TodoList extends React.Component {
                 );
               })}
           </List>
+          <EditTodoDialog todo={editing} onSave={this.handleSave}
+                          onCancel={this.handleCloseEditDialog}
+                          onDelete={this.handleDelete}
+          />
         </Paper>
       </React.Fragment>
     );

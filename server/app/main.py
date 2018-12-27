@@ -77,11 +77,12 @@ class CamelSnake:
     def process_request(self, req, resp):
         if req.method in ['POST', 'PUT', 'PATCH']:
             body = json.load(req.stream)
+            snaked = {}
             for key in body:
                 snake = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', key)
                 snake = re.sub('([a-z0-9])([A-Z])', r'\1_\2', snake).lower()
-                body[snake] = body.pop(key)
-            req.context['body'] = body
+                snaked[snake] = body[key]
+            req.context['body'] = snaked
 
     def process_response(self, req, resp, resource, req_succeeded):
         def convert(obj):
@@ -115,7 +116,7 @@ class Todos:
                     (Todo.next_reminder <= dt.utcnow().isoformat()) &
                     (Todo.complete == 0))
         else:
-            todos = Todo.select()
+            todos = Todo.select().where(Todo.complete == 0)
         ret = []
         for t in todos:
             ret.append(model_to_dict(t))
@@ -143,7 +144,11 @@ class TodoItem:
         resp.status = falcon.HTTP_204
 
     def on_patch(self, req, resp, id):
-        models.Todo.set_by_id(id, req.context['body'])
+        data = req.context['body']
+        # Temp delete list since its not editable yet.
+        if 'list' in data:
+            del data['list'];
+        models.Todo.set_by_id(id, data)
         resp.status = falcon.HTTP_200
         todo = Todo.get_by_id(id)
         resp.body = json.dumps(model_to_dict(todo), cls=Encoder)

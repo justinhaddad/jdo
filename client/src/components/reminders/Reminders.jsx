@@ -4,6 +4,8 @@ import {withStyles} from '@material-ui/core/styles';
 import Button from '@material-ui/core/Button';
 import Checkbox from '@material-ui/core/Checkbox';
 import Divider from '@material-ui/core/Divider';
+import EditIcon from '@material-ui/icons/Edit';
+import EditTodoDialog from '../edit-dialog';
 import LoopIcon from '@material-ui/icons/Loop';
 import SnoozeIcon from '@material-ui/icons/Snooze';
 import IconButton from '@material-ui/core/IconButton';
@@ -18,8 +20,8 @@ import {createTodo, loadTodos, updateTodo, snoozeAll} from '../../api';
 import Popover from '@material-ui/core/Popover';
 import Sugar from 'sugar-date';
 import Toolbar from '../toolbar/Toolbar';
+import BaseTodoList from '../BaseTodoList';
 
-const remote = window.require('electron').remote;
 
 const snoozeOptions = {
   '5m': 'in 5 minutes',
@@ -50,21 +52,6 @@ const snoozeOptions = {
   'Sa': 'Saturday at noon',
 };
 
-const repeatSugar = {
-  'hourly': 'in an hour',
-  'daily': 'tomorrow at noon',
-  'nightly': 'tomorrow at 4pm',
-  'weekly': 'next Sunday',
-  'monthly': 'the beginning of next month',
-  'sundays': 'next Sunday',
-  'mondays': 'next Monday',
-  'tuesdays': 'next Tuesday',
-  'wednesdays': 'next Wednesday',
-  'thursdays': 'next Thursday',
-  'fridays': 'next Friday',
-  'saturdays': 'next Saturday',
-};
-
 const styles = theme => ({
   root: {
     width: '100%',
@@ -79,6 +66,9 @@ const styles = theme => ({
   repeatIcon: {
     fontSize: 16,
   },
+  editControl: {
+    padding: 3,
+  }
 });
 
 function desc(a, b, orderBy) {
@@ -105,27 +95,17 @@ function getSorting(order, orderBy) {
   return order === 'desc' ? (a, b) => desc(a, b, orderBy) : (a, b) => -desc(a, b, orderBy);
 }
 
-class Reminders extends React.Component {
+class Reminders extends BaseTodoList {
   state = {
     todos: fromJS([]),
     anchorEl: null,
     orderBy: 'nextReminder',
     order: 'desc',
     searchTxt: null,
-  };
-
-  reloadTodos = async () => {
-    let todos = await loadTodos(true);
-    this.setState({todos: fromJS(todos)});
-    if(todos.length == 0) {
-      remote.getCurrentWindow().hide();
-    }
-  };
-
-  componentDidMount() {
-    this.reloadTodos();
-    setInterval(this.reloadTodos, 5000);
-  }
+    editing: false,
+    remote: window.require('electron').remote,
+    remindersOnly: true,
+};
 
   handleSnooze = async e => {
     this.hideSnoozePopover();
@@ -138,41 +118,14 @@ class Reminders extends React.Component {
     this.setState({anchorEl: null});
   };
 
-  handleToggleComplete = async (todoId, current) => {
-    await updateTodo(todoId, {complete: !current});
-    // Create a new todo if repeat is set.
-    const todo = this.state.todos.toJS().filter(t => t.id === todoId)[0];
-    if(!current && todo.repeat) {
-      const dup = {
-        created: todo.created,
-        headline: todo.headline,
-        note: todo.note,
-        priority: todo.priority,
-        nextReminder: Sugar.Date.create(repeatSugar[todo.repeat]).toISOString(),
-        repeat: todo.repeat,
-      };
-      await createTodo(dup);
-    }
-    this.reloadTodos();
-  };
 
   handleSnoozeAll = () => {
     snoozeAll(10);
   };
 
-  handleSearch = searchTxt => {
-    const {todos} = this.state;
-    if(searchTxt) {
-      const filtered = todos.toJS().filter(t => t.headline.toLowerCase().includes(searchTxt.toLowerCase()));
-      this.setState({filtered});
-    } else {
-      this.setState({filtered: null});
-    }
-  };
-
   render() {
     const {classes} = this.props;
-    const {todos, filtered, order, orderBy, anchorEl} = this.state;
+    const {todos, filtered, order, orderBy, anchorEl, editing} = this.state;
     const open = Boolean(anchorEl);
     return (
       <React.Fragment>
@@ -188,7 +141,7 @@ class Reminders extends React.Component {
                     role="checkbox"
                     key={n.id}
                   >
-                    <Checkbox
+                    <Checkbox className={classes.editControl}
                       checked={n.complete}
                       tabIndex={-1}
                       disableRipple
@@ -208,7 +161,11 @@ class Reminders extends React.Component {
                         </span>
                       }
                     />
-                    <IconButton aria-label="Snooze"
+                    <IconButton aria-label="Edit" className={classes.editControl}
+                                onClick={e => this.setState({editing: n})}>
+                      <EditIcon/>
+                    </IconButton>
+                    <IconButton aria-label="Snooze" className={classes.editControl}
                                 onClick={e => this.setState({anchorEl: e.currentTarget, selected: n.id})}>
                       <SnoozeIcon/>
                     </IconButton>
@@ -240,6 +197,10 @@ class Reminders extends React.Component {
                     onClick={this.handleSnooze}>{opt}</Button>
           ))}
         </Popover>
+        <EditTodoDialog todo={editing} onSave={this.handleSave}
+                        onCancel={this.handleCloseEditDialog}
+                        onDelete={this.handleDelete}
+        />
       </Paper>
       </React.Fragment>
     );
