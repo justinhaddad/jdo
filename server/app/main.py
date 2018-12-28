@@ -114,9 +114,10 @@ class Todos:
             else:
                 todos = Todo.select().where(
                     (Todo.next_reminder <= dt.utcnow().isoformat()) &
-                    (Todo.complete == 0))
+                    (Todo.complete == 0)).order_by(Todo.next_reminder)
         else:
-            todos = Todo.select().where(Todo.complete == 0)
+            todos = Todo.select().where(Todo.complete == 0).order_by(
+                Todo.next_reminder.asc())
         ret = []
         for t in todos:
             ret.append(model_to_dict(t))
@@ -148,6 +149,8 @@ class TodoItem:
         # Temp delete list since its not editable yet.
         if 'list' in data:
             del data['list'];
+        if data.get('repeat', 'never').lower() == 'never':
+            data['repeat'] = None
         models.Todo.set_by_id(id, data)
         resp.status = falcon.HTTP_200
         todo = Todo.get_by_id(id)

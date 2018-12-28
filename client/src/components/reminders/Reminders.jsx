@@ -1,6 +1,5 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import {withStyles} from '@material-ui/core/styles';
+import Badge from '@material-ui/core/Badge';
+import BaseTodoList from '../BaseTodoList';
 import Button from '@material-ui/core/Button';
 import Checkbox from '@material-ui/core/Checkbox';
 import Divider from '@material-ui/core/Divider';
@@ -16,11 +15,13 @@ import Paper from '@material-ui/core/Paper';
 import Tooltip from '@material-ui/core/Tooltip';
 import Typography from '@material-ui/core/Typography';
 import {fromJS} from 'immutable';
-import {createTodo, loadTodos, updateTodo, snoozeAll} from '../../api';
+import {updateTodo, snoozeAll} from '../../api';
 import Popover from '@material-ui/core/Popover';
+import PropTypes from 'prop-types';
+import React from 'react';
 import Sugar from 'sugar-date';
 import Toolbar from '../toolbar/Toolbar';
-import BaseTodoList from '../BaseTodoList';
+import {withStyles} from '@material-ui/core/styles';
 
 
 const snoozeOptions = {
@@ -68,7 +69,14 @@ const styles = theme => ({
   },
   editControl: {
     padding: 3,
-  }
+  },
+  badge: {
+    fontSize: 10,
+    top: 8,
+    right: -8,
+    width: 12,
+    height: 12,
+  },
 });
 
 function desc(a, b, orderBy) {
@@ -154,7 +162,10 @@ class Reminders extends BaseTodoList {
                             {n.headline}
                             {n.repeat && n.repeat !== 'never' &&
                               <Tooltip title={n.repeat}>
-                                <LoopIcon color="disabled" className={classes.repeatIcon}/>
+                                <Badge badgeContent={n.repeat.charAt(0).toUpperCase()} color="primary"
+                                       classes={{badge: classes.badge}}>
+                                  <LoopIcon color="primary" className={classes.repeatIcon}/>
+                                </Badge>
                               </Tooltip>
                             }
                           </Typography>

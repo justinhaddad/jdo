@@ -127,7 +127,7 @@ class TodoList extends BaseTodoList {
                  count={todos.size} />
         <Paper className={classes.root}>
           <List className={classes.root}>
-            {stableSort(filtered || todos.toJS(), getSorting(order, orderBy))
+            {(filtered || todos.toJS())
               .map(n => {
                 return (
                   <React.Fragment>
@@ -162,7 +162,7 @@ class TodoList extends BaseTodoList {
                               onChange={date => this.handleNextReminderChange(n.id, date)}
                               label={null}
                               showTodayButton
-                              format="MMM do h:ss a"
+                              format="MMM do h:mm a"
                             />
                           </MuiPickersUtilsProvider>
                         </Grid>
