@@ -149,8 +149,11 @@ class TodoItem:
         # Temp delete list since its not editable yet.
         if 'list' in data:
             del data['list'];
-        if data.get('repeat', 'never').lower() == 'never':
-            data['repeat'] = None
+
+        if 'repeat' in data:
+            repeat = data.get('repeat', 'never')
+            if repeat and repeat.lower() == 'never':
+                data['repeat'] = None
         models.Todo.set_by_id(id, data)
         resp.status = falcon.HTTP_200
         todo = Todo.get_by_id(id)

@@ -44,13 +44,13 @@ const snoozeOptions = {
   'tomorrow morn': 'tomorrow at 9am',
   'tomorrow noon': 'tomorrow at noon',
   'tomorrow eve': 'tomorrow at 5pm',
-  'Su': 'Sunday at noon',
-  'M': 'Monday at noon',
-  'Tu': 'Tuesday at noon',
-  'W': 'Wednesday at noon',
-  'Th': 'Thursday at noon',
-  'F': 'Friday at noon',
-  'Sa': 'Saturday at noon',
+  'Su': 'next Sunday at noon',
+  'M': 'next Monday at noon',
+  'Tu': 'next Tuesday at noon',
+  'W': 'next Wednesday at noon',
+  'Th': 'next Thursday at noon',
+  'F': 'next Friday at noon',
+  'Sa': 'next Saturday at noon',
 };
 
 const styles = theme => ({
@@ -71,11 +71,11 @@ const styles = theme => ({
     padding: 3,
   },
   badge: {
-    fontSize: 10,
+    fontSize: 9,
     top: 8,
     right: -8,
-    width: 12,
-    height: 12,
+    width: 15,
+    height: 15,
   },
 });
 
@@ -135,6 +135,15 @@ class Reminders extends BaseTodoList {
     const {classes} = this.props;
     const {todos, filtered, order, orderBy, anchorEl, editing} = this.state;
     const open = Boolean(anchorEl);
+
+    const abbreviatedRepeat =repeat => {
+      let abbrev = repeat.charAt(0).toUpperCase();
+      if(repeat.endsWith('days')) {
+        abbrev += repeat.charAt(1);
+      }
+      return abbrev;
+    };
+
     return (
       <React.Fragment>
         <Toolbar onSnoozeAll={this.handleSnoozeAll} onSearch={this.handleSearch}
@@ -162,7 +171,7 @@ class Reminders extends BaseTodoList {
                             {n.headline}
                             {n.repeat && n.repeat !== 'never' &&
                               <Tooltip title={n.repeat}>
-                                <Badge badgeContent={n.repeat.charAt(0).toUpperCase()} color="primary"
+                                <Badge badgeContent={abbreviatedRepeat(n.repeat)} color="primary"
                                        classes={{badge: classes.badge}}>
                                   <LoopIcon color="primary" className={classes.repeatIcon}/>
                                 </Badge>
@@ -177,7 +186,8 @@ class Reminders extends BaseTodoList {
                       <EditIcon/>
                     </IconButton>
                     <IconButton aria-label="Snooze" className={classes.editControl}
-                                onClick={e => this.setState({anchorEl: e.currentTarget, selected: n.id})}>
+                                onClick={e => this.setState({anchorEl: e.currentTarget, selected: n.id})}
+                    >
                       <SnoozeIcon/>
                     </IconButton>
                   </ListItem>

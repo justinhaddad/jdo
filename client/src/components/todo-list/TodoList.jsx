@@ -1,6 +1,5 @@
 import React from 'react';
 import {fromJS} from 'immutable';
-import {debounce} from 'lodash';
 import PropTypes from 'prop-types';
 import {withStyles} from '@material-ui/core/styles';
 import Checkbox from '@material-ui/core/Checkbox';
@@ -15,7 +14,6 @@ import Grid from '@material-ui/core/Grid';
 import IconButton from '@material-ui/core/IconButton';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
-import ListItemText from '@material-ui/core/ListItemText';
 import LoopIcon from '@material-ui/icons/Loop';
 import MenuItem from '@material-ui/core/MenuItem';
 import {MuiPickersUtilsProvider} from 'material-ui-pickers';
@@ -28,7 +26,7 @@ import Toolbar from '../toolbar';
 import Tooltip from '@material-ui/core/Tooltip';
 import Typography from '@material-ui/core/Typography';
 
-import {createTodo, deleteTodo, loadTodos, updateTodo} from '../../api';
+import {createTodo, updateTodo} from '../../api';
 import BaseTodoList from '../BaseTodoList';
 
 // const remote = window.require('electron').remote;
@@ -120,7 +118,7 @@ class TodoList extends BaseTodoList {
 
   render() {
     const {classes} = this.props;
-    const {todos, filtered, order, orderBy, editing} = this.state;
+    const {todos, filtered, editing} = this.state;
     return (
       <React.Fragment>
         <Toolbar onCreate={this.create} onSearch={this.handleSearch} showSnooze={false}

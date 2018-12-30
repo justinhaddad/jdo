@@ -1,12 +1,13 @@
-const electron = require("electron");
-const app = electron.app;
-const BrowserWindow = electron.BrowserWindow;
+const {app, BrowserWindow, Menu, Tray} = require('electron');
+// const app = electron.app;
+// const BrowserWindow = electron.BrowserWindow;
 const axios = require("axios");
 const path = require("path");
 const isDev = require("electron-is-dev");
-
+// const {Menu, MenuItem} = remote;
 let mainWindow;
 let reminderWindow;
+let tray;
 
 require("update-electron-app")({
   repo: "kitze/react-electron-example",
@@ -25,7 +26,7 @@ function checkReminders() {
 }
 
 function createWindow() {
-  mainWindow = new BrowserWindow({ width: 900, height: 680, title: 'JDO - Tasks' });
+  mainWindow = new BrowserWindow({width: 1100, height: 680, title: 'JDO - Tasks'});
   mainWindow.loadURL(
     isDev
       ? "http://localhost:3000?todos"
@@ -34,7 +35,7 @@ function createWindow() {
   mainWindow.on("closed", () => (mainWindow = null));
 
   reminderWindow = new BrowserWindow({
-    width: 400, height: 780, x: 0, y: 0,
+    width: 400, height: 500, x: 0, y: 0,
     title: 'JDO - Reminders', show: true,
   });
   reminderWindow.on("closed", () => (reminderWindow.hide()));
@@ -44,6 +45,24 @@ function createWindow() {
       : `file://${path.join(__dirname, "../build/index.html?reminders")}`
   );
   setInterval(checkReminders, 5000);
+  createTrayIcon();
+}
+
+function createTrayIcon() {
+  const icon = path.join(__dirname, '/baseline_beenhere_white_18dp.png');
+  tray = new Tray(icon);
+
+  tray.on('click', () => {
+    mainWindow.show();
+  });
+
+  /*
+  const contextMenu = Menu.buildFromTemplate([
+    { label: 'Tasks', click: () => mainWindow.show()},
+    { label: 'Reminders', click: () => reminderWindow.show()},
+  ]);
+  tray.setContextMenu(contextMenu);
+  */
 }
 
 app.on("ready", createWindow);

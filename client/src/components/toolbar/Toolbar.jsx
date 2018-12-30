@@ -17,7 +17,13 @@ import {withStyles} from '@material-ui/core/styles/index';
 import {lighten} from '@material-ui/core/styles/colorManipulator';
 import {snoozeAll} from '../../api';
 
-const remote = window.require('electron').remote;
+let remote;
+try {
+  remote = window.require('electron').remote;
+} catch(e) {
+  console.log('Not running in electron.');
+}
+
 
 const toolbarStyles = theme => ({
   root: {

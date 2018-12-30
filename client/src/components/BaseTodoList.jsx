@@ -1,6 +1,7 @@
-import React from 'react';
+import {debounce} from 'lodash';
 import {createTodo, deleteTodo, loadTodos, updateTodo} from '../api';
 import {fromJS} from "immutable";
+import React from 'react';
 import Sugar from 'sugar-date';
 
 const repeatSugar = {
@@ -20,10 +21,14 @@ const repeatSugar = {
 
 export default class BaseTodoList extends React.Component {
   reloadTodos = async () => {
-    const {remote, remindersOnly} = this.state;
-    let todos = await loadTodos(remindersOnly);
-    this.setState({todos: fromJS(todos)});
-    if(remote && todos.length == 0) {
+    const {remote, remindersOnly, searchTxt} = this.state;
+    const todos = await loadTodos(remindersOnly);
+    let filtered = null;
+    if(searchTxt) {
+      filtered = todos.filter(t => t.headline.toLowerCase().includes(searchTxt.toLowerCase()));
+    }
+    this.setState({todos: fromJS(todos), filtered});
+    if(remote && todos.length === 0) {
       remote.getCurrentWindow().hide();
     }
   };
@@ -51,15 +56,14 @@ export default class BaseTodoList extends React.Component {
     this.reloadTodos();
   };
 
-  handleSearch = searchTxt => {
+  handleSearch = debounce(searchTxt => {
     const {todos} = this.state;
+    let filtered = null;
     if(searchTxt) {
-      const filtered = todos.toJS().filter(t => t.headline.toLowerCase().includes(searchTxt.toLowerCase()));
-      this.setState({filtered});
-    } else {
-      this.setState({filtered: null});
+      filtered = todos.toJS().filter(t => t.headline.toLowerCase().includes(searchTxt.toLowerCase()));
     }
-  };
+    this.setState({filtered, searchTxt});
+  }, 500);
 
   handleSave = async (todo) => {
     await updateTodo(todo.id, todo);
