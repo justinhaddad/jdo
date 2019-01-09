@@ -92,7 +92,7 @@ const toolbarStyles = theme => ({
     [theme.breakpoints.up('sm')]: {
       width: 200,
       '&:focus': {
-        width: 300,
+        width: 400,
       },
     },
   },
@@ -106,12 +106,12 @@ const toolbarStyles = theme => ({
     [theme.breakpoints.up('sm')]: {
       width: 100,
       '&:focus': {
-        width: 300,
+        width: 400,
       },
     },
   },
   barText: {
-    color: 'white',
+    color: theme.palette.text.primary,
   },
   info: {
     width: 300,
@@ -168,7 +168,7 @@ class EnhancedTableToolbar extends React.Component {
               <AddIcon />
             </div>
             <InputBase
-              placeholder="New Todo…"
+              placeholder="New Todo… [; reminder, e.g. at noon [; repeat, eg. daily]]"
               classes={{
                 root: classes.inputRoot,
                 input: classes.addInput,

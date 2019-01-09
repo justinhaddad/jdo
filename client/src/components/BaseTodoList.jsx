@@ -7,7 +7,7 @@ import Sugar from 'sugar-date';
 const repeatSugar = {
   'hourly': 'in an hour',
   'daily': 'tomorrow at noon',
-  'nightly': 'tomorrow at 4pm',
+  'nightly': 'tomorrow at 5pm',
   'weekly': 'next Sunday',
   'monthly': 'the beginning of next month',
   'sundays': 'next Sunday',
@@ -63,7 +63,7 @@ export default class BaseTodoList extends React.Component {
       filtered = todos.toJS().filter(t => t.headline.toLowerCase().includes(searchTxt.toLowerCase()));
     }
     this.setState({filtered, searchTxt});
-  }, 500);
+  }, 200);
 
   handleSave = async (todo) => {
     await updateTodo(todo.id, todo);

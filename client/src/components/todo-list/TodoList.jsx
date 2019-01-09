@@ -81,6 +81,7 @@ const styles = theme => ({
     fontSize: 20,
     marginTop: 10,
     marginRight: 10,
+    color: theme.palette.text.primary,
   },
   editControl: {
     padding: 3,

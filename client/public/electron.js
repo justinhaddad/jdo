@@ -26,7 +26,9 @@ function checkReminders() {
 }
 
 function createWindow() {
-  mainWindow = new BrowserWindow({width: 1100, height: 680, title: 'JDO - Tasks'});
+  mainWindow = new BrowserWindow({
+    width: 1100, height: 680, title: 'JDO - Tasks', backgroundColor: '#424242',
+  });
   mainWindow.loadURL(
     isDev
       ? "http://localhost:3000?todos"
@@ -35,8 +37,9 @@ function createWindow() {
   mainWindow.on("closed", () => (mainWindow = null));
 
   reminderWindow = new BrowserWindow({
-    width: 400, height: 500, x: 0, y: 0,
+    width: 400, height: 500, x: 0, y: 0, backgroundColor: '#424242',
     title: 'JDO - Reminders', show: true,
+    minimizable: false, maximizable: false, closable: false,
   });
   reminderWindow.on("closed", () => (reminderWindow.hide()));
   reminderWindow.loadURL(

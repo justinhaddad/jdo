@@ -10,8 +10,8 @@ from peewee import IntegrityError
 from playhouse.shortcuts import model_to_dict
 from wsgiref import simple_server
 
-from models import Todo, SnoozeAll, TodoList
-import models
+from app.models import Todo, SnoozeAll, TodoList
+from app import models
 
 DEFAULT_LIST = 'Reminders';
 count = 0

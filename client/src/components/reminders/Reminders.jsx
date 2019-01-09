@@ -34,16 +34,20 @@ const snoozeOptions = {
   '3h': 'in 3 hours',
   '4h': 'in 4 hours',
   '8h': 'in 8 hours',
+  '12h': 'in 12 hours',
+  '20h': 'in 20 hours',
   '1d': 'in 1 day',
   '2d': 'in 2 days',
   '3d': 'in 3 days',
   '1w': 'in 1 week',
   '2w': 'in 2 weeks',
   '1mo': 'in 1 month',
+  '3mo': 'in 3 months',
+  '6mo': 'in 6 months',
   '1y': 'in 1 year',
-  'tomorrow morn': 'tomorrow at 9am',
-  'tomorrow noon': 'tomorrow at noon',
-  'tomorrow eve': 'tomorrow at 5pm',
+  'morrow morn': 'tomorrow at 9am',
+  'morrow noon': 'tomorrow at noon',
+  'morrow eve': 'tomorrow at 5pm',
   'Su': 'next Sunday at noon',
   'M': 'next Monday at noon',
   'Tu': 'next Tuesday at noon',
@@ -76,6 +80,11 @@ const styles = theme => ({
     right: -8,
     width: 15,
     height: 15,
+  },
+  popoverTitle: {
+    padding: 10,
+    backgroundColor: theme.palette.primary.main,
+    color: theme.palette.common.white,
   },
 });
 
@@ -120,6 +129,14 @@ class Reminders extends BaseTodoList {
     const next = Sugar.Date.create(e.currentTarget.value);
     await updateTodo(this.state.selected, {nextReminder: next.toISOString()});
     this.reloadTodos();
+  };
+
+  showSnoozePopover = (target, id, headline) => {
+    this.setState({
+      anchorEl: target,
+      selected: id,
+      selectedHeadline: headline,
+    });
   };
 
   hideSnoozePopover = () => {
@@ -186,7 +203,7 @@ class Reminders extends BaseTodoList {
                       <EditIcon/>
                     </IconButton>
                     <IconButton aria-label="Snooze" className={classes.editControl}
-                                onClick={e => this.setState({anchorEl: e.currentTarget, selected: n.id})}
+                                onClick={e => this.showSnoozePopover(e.currentTarget, n.id, n.headline)}
                     >
                       <SnoozeIcon/>
                     </IconButton>
@@ -213,6 +230,10 @@ class Reminders extends BaseTodoList {
             horizontal: 'center',
           }}
         >
+          <Typography className={classes.popoverTitle} variant="subheading" component="h5">
+            {`Snooze: ${this.state.selectedHeadline}`}
+          </Typography>
+          <Divider/>
           {Object.keys(snoozeOptions).map(opt => (
             <Button value={snoozeOptions[opt]}
                     onClick={this.handleSnooze}>{opt}</Button>
