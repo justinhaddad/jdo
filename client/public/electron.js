@@ -52,7 +52,7 @@ function createWindow() {
 }
 
 function createTrayIcon() {
-  const icon = path.join(__dirname, '/baseline_beenhere_white_18dp.png');
+  const icon = path.join(__dirname, '/logo.png');
   tray = new Tray(icon);
 
   tray.on('click', () => {

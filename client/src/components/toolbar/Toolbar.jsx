@@ -5,11 +5,14 @@ import AddIcon from '@material-ui/icons/Add';
 import AppBar from '@material-ui/core/AppBar';
 import ClearIcon from '@material-ui/icons/Clear';
 import { fade } from '@material-ui/core/styles/colorManipulator';
+import FormHelperText from '@material-ui/core/FormHelperText';
 import IconButton from '@material-ui/core/IconButton';
 import InputAdornment from '@material-ui/core/InputAdornment';
 import InputBase from '@material-ui/core/InputBase';
+import {repeatOptions} from '../constants';
 import SearchIcon from '@material-ui/icons/Search';
 import SnoozeIcon from '@material-ui/icons/Snooze';
+import Sugar from 'sugar-date';
 import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
 
@@ -115,18 +118,46 @@ const toolbarStyles = theme => ({
   },
   info: {
     width: 300,
-  }
+  },
+  error: {
+    position: 'relative',
+    top: -20,
+    fontSize: 15,
+    left: 165,
+  },
 });
 
 class EnhancedTableToolbar extends React.Component {
   state = {
     headline: '',
     searchText: '',
+    errorMessage: false,
   };
 
   handleCreate = () => {
-    this.props.onCreate(this.state.headline);
-    this.setState({headline: ''});
+    // Check for valid nextReminder term before attemptng to create.
+    let headline = this.state.headline;
+    const parts = headline.split(';');
+    let errorMessage = '';
+    if(parts.length > 1) {
+      try {
+        if(parts[1].trim()) {
+          Sugar.Date.create(parts[1]).toISOString();
+        }
+        if(parts.length > 2 && parts[2].trim()) {
+          if(!repeatOptions.includes(parts[2].trim().toLowerCase())) {
+            errorMessage = `Invalid repeat option: ${parts[2]}`;
+          }
+        }
+      } catch(error) {
+        errorMessage = `Invalid reminder time: ${parts[1]}`;
+      }
+    }
+    if(!errorMessage) {
+      this.props.onCreate(headline);
+      headline = '';
+    }
+    this.setState({errorMessage, headline});
   };
 
   catchReturn = e => {
@@ -137,7 +168,6 @@ class EnhancedTableToolbar extends React.Component {
 
   snooze = () => {
     snoozeAll(300);
-    console.log('Hiding window.', remote.getCurrentWindow().getTitle());
     remote.getCurrentWindow().hide();
   };
 
@@ -153,7 +183,7 @@ class EnhancedTableToolbar extends React.Component {
 
   render() {
     const {classes, onCreate, showSnooze, count} = this.props;
-    const {headline, searchText} = this.state;
+    const {headline, searchText, errorMessage} = this.state;
 
     return (
       <div className={classes.bar}>
@@ -165,7 +195,7 @@ class EnhancedTableToolbar extends React.Component {
         {onCreate &&
           <div className={classes.search}>
             <div className={classes.searchIcon}>
-              <AddIcon />
+              <AddIcon/>
             </div>
             <InputBase
               placeholder="New Todo… [; reminder, e.g. at noon [; repeat, eg. daily]]"
@@ -176,6 +206,7 @@ class EnhancedTableToolbar extends React.Component {
               value={headline}
               onChange={e => this.setState({headline: e.target.value})}
               onKeyPress={this.catchReturn}
+              error={errorMessage}
             />
           </div>
         }
@@ -213,6 +244,10 @@ class EnhancedTableToolbar extends React.Component {
           }
         </div>
       </Toolbar>
+      {errorMessage &&
+        <FormHelperText className={classes.error} error={true}>{errorMessage}</FormHelperText>
+      }
+
       </AppBar>
       </div>
     );

@@ -19,12 +19,22 @@ export const createTodo = async arg => {
     todo = {
       headline: parts[0],
     };
-    if (parts.length > 1) {
-      const nextReminder = Sugar.Date.create(parts[1]);
-      todo.nextReminder = nextReminder.toISOString();
+    if (parts.length > 1 && parts[1].trim()) {
+      let nextReminder = parts[1].trim();
+      if(nextReminder.startsWith('at')) {
+        nextReminder = nextReminder.substring(nextReminder.indexOf('at') + 2);
+      }
+      try {
+        nextReminder = Sugar.Date.create(nextReminder);
+        todo.nextReminder = nextReminder.toISOString();
+        this.setState({sugarError: false});
+      } catch(error) {
+        console.error('Failed to parse nextReminder with SugarJS.', error);
+        return null;
+      }
     }
-    if (parts.length > 2) {
-      todo['repeat'] = parts[2];
+    if (parts.length > 2 && parts[2].trim()) {
+      todo['repeat'] = parts[2].trim().toLowerCase();
     }
   }
   console.log('Creating Todo: ', todo);
