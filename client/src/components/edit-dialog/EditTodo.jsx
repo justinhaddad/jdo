@@ -24,32 +24,24 @@ const styles = theme => ({
 
 class EditTodo extends React.Component {
   state = {
-    open: false,
   };
 
-  /*
   static getDerivedStateFromProps(props, state) {
-    console.log('Deriving from:', props.todo);
-    // return {...state, todo: props.todo};
+    if(state.todo) {
+      return state;
+    }
+    const todo = props.todo ? {...props.todo} : null;
+    return {...state, todo};
   }
-  */
-
-  handleClickOpen = () => {
-    this.setState({ open: true });
-  };
-
-  handleClose = () => {
-    this.setState({open: false, todo: null});
-  };
 
   handleSave = () => {
     const {todo} = this.state;
     this.props.onSave(todo);
-    this.setState({todo: null});
+    this.handleClose();
   };
 
   handleChange = e => {
-    const todo = this.state.todo || {...this.props.todo};
+    const {todo} = this.state;
     todo[e.target.name] = e.target.value;
     this.setState({todo});
   };
@@ -60,13 +52,19 @@ class EditTodo extends React.Component {
     this.handleClose();
   };
 
+  handleClose = () => {
+    this.setState({todo: null});
+    this.props.onClose();
+  };
+
   render() {
-    const {classes, onCancel} = this.props;
-    const todo = this.state.todo || this.props.todo;
+    const {classes} = this.props;
+    const {todo} = this.state;
+    const open = !!todo;
     return (
       <Dialog
-        open={!!todo}
-        onClose={onCancel}
+        open={open}
+        onClose={this.handleClose}
         aria-labelledby="form-dialog-title"
       >
         <DialogTitle id="form-dialog-title">Edit Todo</DialogTitle>
@@ -80,13 +78,13 @@ class EditTodo extends React.Component {
             fullWidth
             multiline
             rows={3}
-            defaultValue={todo.headline}
+            defaultValue={todo ? todo.headline : ''}
             onChange={this.handleChange}
             variant="outlined"
           />
           <FormControl className={classes.formControl}>
             <Select className={classes.repeatSelect}
-                    value={todo.repeat}
+                    value={todo ? todo.repeat : null}
                     onChange={this.handleChange}
                     inputProps={{
                       name: 'repeat',
@@ -104,7 +102,7 @@ class EditTodo extends React.Component {
           <Button onClick={this.handleDelete} color="secondary">
             Delete
           </Button>
-          <Button onClick={onCancel} color="primary">
+          <Button onClick={this.handleClose} color="primary">
             Cancel
           </Button>
           <Button onClick={this.handleSave} color="primary">

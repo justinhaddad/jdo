@@ -9,13 +9,16 @@ let mainWindow;
 let reminderWindow;
 let tray;
 
+//const REMINDERS_URL = 'http://localhost:5005/todos?remindersOnly=true';
+const REMINDERS_URL = 'http://ec2-3-17-36-180.us-east-2.compute.amazonaws.com/todos?remindersOnly=true';
+
 require("update-electron-app")({
   repo: "kitze/react-electron-example",
   updateInterval: "1 hour"
 });
 
 function checkReminders() {
-  axios.get('http://localhost:5005/todos?remindersOnly=true').then(resp => {
+  axios.get(REMINDERS_URL).then(resp => {
     if (resp.data.totalCount > 0) {
       reminderWindow.showInactive();
       reminderWindow.setAlwaysOnTop(true, 'screen-saver');

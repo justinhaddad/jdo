@@ -1,7 +1,9 @@
 import Sugar from 'sugar-date';
 
-const TODO_URL = 'http://localhost:5005/todos';
-const SNOOZE_URL = 'http://localhost:5005/snooze-all';
+//const URL_BASE = 'http://localhost:5005';
+const URL_BASE = 'http://ec2-3-17-36-180.us-east-2.compute.amazonaws.com';
+const TODO_URL = `${URL_BASE}/todos`;
+const SNOOZE_URL = `${URL_BASE}/snooze-all`;
 
 export const loadTodos = async (remindersOnly = false) => {
   const url = `${TODO_URL}?remindersOnly=${remindersOnly}`;
@@ -25,9 +27,9 @@ export const createTodo = async arg => {
         nextReminder = nextReminder.substring(nextReminder.indexOf('at') + 2);
       }
       try {
+        console.log('Parsing:', nextReminder);
         nextReminder = Sugar.Date.create(nextReminder);
         todo.nextReminder = nextReminder.toISOString();
-        this.setState({sugarError: false});
       } catch(error) {
         console.error('Failed to parse nextReminder with SugarJS.', error);
         return null;

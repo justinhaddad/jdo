@@ -72,7 +72,7 @@ export default class BaseTodoList extends React.Component {
   };
 
   handleCloseEditDialog = () => {
-    this.setState({editing: false});
+    this.setState({editing: null});
   };
 
   handleDelete = async id => {

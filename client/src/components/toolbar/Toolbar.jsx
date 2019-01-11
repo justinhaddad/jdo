@@ -198,7 +198,7 @@ class EnhancedTableToolbar extends React.Component {
               <AddIcon/>
             </div>
             <InputBase
-              placeholder="New Todo… [; reminder, e.g. at noon [; repeat, eg. daily]]"
+              placeholder="New Todo… [; reminder, e.g. noon [; repeat, e.g. daily]]"
               classes={{
                 root: classes.inputRoot,
                 input: classes.addInput,
@@ -206,7 +206,7 @@ class EnhancedTableToolbar extends React.Component {
               value={headline}
               onChange={e => this.setState({headline: e.target.value})}
               onKeyPress={this.catchReturn}
-              error={errorMessage}
+              error={!!errorMessage}
             />
           </div>
         }

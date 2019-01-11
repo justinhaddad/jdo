@@ -201,7 +201,7 @@ class TodoList extends BaseTodoList {
               })}
           </List>
           <EditTodoDialog todo={editing} onSave={this.handleSave}
-                          onCancel={this.handleCloseEditDialog}
+                          onClose={this.handleCloseEditDialog}
                           onDelete={this.handleDelete}
           />
         </Paper>

@@ -151,6 +151,7 @@ class Reminders extends BaseTodoList {
   render() {
     const {classes} = this.props;
     const {todos, filtered, order, orderBy, anchorEl, editing} = this.state;
+    console.log('Editing:', editing);
     const open = Boolean(anchorEl);
 
     const abbreviatedRepeat =repeat => {
@@ -240,7 +241,7 @@ class Reminders extends BaseTodoList {
           ))}
         </Popover>
         <EditTodoDialog todo={editing} onSave={this.handleSave}
-                        onCancel={this.handleCloseEditDialog}
+                        onClose={this.handleCloseEditDialog}
                         onDelete={this.handleDelete}
         />
       </Paper>
