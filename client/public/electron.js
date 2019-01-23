@@ -9,8 +9,8 @@ let mainWindow;
 let reminderWindow;
 let tray;
 
-//const REMINDERS_URL = 'http://localhost:5005/todos?remindersOnly=true';
-const REMINDERS_URL = 'http://ec2-3-17-36-180.us-east-2.compute.amazonaws.com/todos?remindersOnly=true';
+const REMINDERS_URL = 'http://localhost:5005/todos?remindersOnly=true';
+//const REMINDERS_URL = 'http://ec2-3-17-36-180.us-east-2.compute.amazonaws.com/todos?remindersOnly=true';
 
 require("update-electron-app")({
   repo: "kitze/react-electron-example",

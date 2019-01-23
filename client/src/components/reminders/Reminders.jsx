@@ -14,15 +14,22 @@ import ListItemText from '@material-ui/core/ListItemText';
 import Paper from '@material-ui/core/Paper';
 import Tooltip from '@material-ui/core/Tooltip';
 import Typography from '@material-ui/core/Typography';
-import {fromJS} from 'immutable';
-import {updateTodo, snoozeAll} from '../../api';
 import Popover from '@material-ui/core/Popover';
 import PropTypes from 'prop-types';
 import React from 'react';
 import Sugar from 'sugar-date';
 import Toolbar from '../toolbar/Toolbar';
 import {withStyles} from '@material-ui/core/styles';
+import {bindActionCreators, compose} from 'redux';
+import {ActionCreators} from '../../todoDuck';
+import {connect} from 'react-redux';
 
+let remote;
+try {
+  remote = window.require('electron').remote;
+} catch(e) {
+  console.log('Not running in electron.');
+}
 
 const snoozeOptions = {
   '5m': 'in 5 minutes',
@@ -114,7 +121,6 @@ function getSorting(order, orderBy) {
 
 class Reminders extends BaseTodoList {
   state = {
-    todos: fromJS([]),
     anchorEl: null,
     orderBy: 'nextReminder',
     order: 'desc',
@@ -127,7 +133,8 @@ class Reminders extends BaseTodoList {
   handleSnooze = async e => {
     this.hideSnoozePopover();
     const next = Sugar.Date.create(e.currentTarget.value);
-    await updateTodo(this.state.selected, {nextReminder: next.toISOString()});
+    await this.props.actions.updateTodo(
+      this.state.selected, {nextReminder: next.toISOString()});
     this.reloadTodos();
   };
 
@@ -145,13 +152,15 @@ class Reminders extends BaseTodoList {
 
 
   handleSnoozeAll = () => {
-    snoozeAll(10);
+    this.props.actions.snoozeAll(300);
+    if (remote) {
+      remote.getCurrentWindow().hide();
+    }
   };
 
   render() {
-    const {classes} = this.props;
-    const {todos, filtered, order, orderBy, anchorEl, editing} = this.state;
-    console.log('Editing:', editing);
+    let {classes, todos} = this.props;
+    const {filtered, order, orderBy, anchorEl, editing} = this.state;
     const open = Boolean(anchorEl);
 
     const abbreviatedRepeat =repeat => {
@@ -165,10 +174,10 @@ class Reminders extends BaseTodoList {
     return (
       <React.Fragment>
         <Toolbar onSnoozeAll={this.handleSnoozeAll} onSearch={this.handleSearch}
-                 count={todos.size} />
+                 count={todos.length} />
         <Paper className={classes.root}>
         <List className={classes.root}>
-          {stableSort(filtered || todos.toJS(), getSorting(order, orderBy))
+          {stableSort(filtered || todos, getSorting(order, orderBy))
             .map(n => {
               return (
                 <React.Fragment>
@@ -250,8 +259,23 @@ class Reminders extends BaseTodoList {
   }
 }
 
+const mapStateToProps = state => state.toObject();
+
+const mapDispatchToProps = dispatch => {
+  return {
+    actions: bindActionCreators(ActionCreators, dispatch),
+    dispatch,
+  };
+};
+
 Reminders.propTypes = {
   classes: PropTypes.object.isRequired,
 };
 
-export default withStyles(styles)(Reminders);
+export default compose(
+  withStyles(styles),
+  connect(
+    mapStateToProps,
+    mapDispatchToProps,
+  )
+)(Reminders);

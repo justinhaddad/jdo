@@ -18,14 +18,6 @@ import Typography from '@material-ui/core/Typography';
 
 import {withStyles} from '@material-ui/core/styles/index';
 import {lighten} from '@material-ui/core/styles/colorManipulator';
-import {snoozeAll} from '../../api';
-
-let remote;
-try {
-  remote = window.require('electron').remote;
-} catch(e) {
-  console.log('Not running in electron.');
-}
 
 
 const toolbarStyles = theme => ({
@@ -166,11 +158,6 @@ class EnhancedTableToolbar extends React.Component {
     }
   };
 
-  snooze = () => {
-    snoozeAll(300);
-    remote.getCurrentWindow().hide();
-  };
-
   onSearch = e => {
     this.setState({searchText: e.target.value});
     this.props.onSearch(e.target.value);
@@ -182,7 +169,7 @@ class EnhancedTableToolbar extends React.Component {
   };
 
   render() {
-    const {classes, onCreate, showSnooze, count} = this.props;
+    const {classes, onCreate, showSnooze, count, onSnoozeAll} = this.props;
     const {headline, searchText, errorMessage} = this.state;
 
     return (
@@ -238,7 +225,7 @@ class EnhancedTableToolbar extends React.Component {
         <div className={classes.actions}>
           {showSnooze &&
             <IconButton aria-label="Snooze"
-                        onClick={this.snooze}>
+                        onClick={onSnoozeAll}>
               <SnoozeIcon className={classes.barText}/>
             </IconButton>
           }
@@ -257,6 +244,7 @@ class EnhancedTableToolbar extends React.Component {
 EnhancedTableToolbar.propTypes = {
   classes: PropTypes.object.isRequired,
   showSnooze: PropTypes.bool,
+  onSnoozeAll: PropTypes.func.isRequired,
 };
 
 EnhancedTableToolbar.defaultProps = {

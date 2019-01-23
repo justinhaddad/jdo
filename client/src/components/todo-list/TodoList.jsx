@@ -1,5 +1,6 @@
 import React from 'react';
-import {fromJS} from 'immutable';
+import { bindActionCreators, compose } from 'redux';
+import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import {withStyles} from '@material-ui/core/styles';
 import Checkbox from '@material-ui/core/Checkbox';
@@ -26,10 +27,9 @@ import Toolbar from '../toolbar';
 import Tooltip from '@material-ui/core/Tooltip';
 import Typography from '@material-ui/core/Typography';
 
-import {createTodo, updateTodo} from '../../api';
 import BaseTodoList from '../BaseTodoList';
+import {ActionCreators} from '../../todoDuck';
 
-// const remote = window.require('electron').remote;
 
 String.prototype.capitalize = function () {
   return this.charAt(0).toUpperCase() + this.slice(1);
@@ -90,43 +90,40 @@ const styles = theme => ({
 
 class TodoList extends BaseTodoList {
   state = {
-    todos: fromJS([]),
+    // todos: fromJS([]),
+    remindersOnly: false,
     orderBy: 'nextReminder',
     order: 'desc',
     editing: false,
   };
 
   create = async headline => {
-    await createTodo(headline);
-    this.reloadTodos();
-  };
-
-  handleMenuItemClick = async (event, index) => {
-    this.setState({selectedIndex: index});
-    await updateTodo(this.state.selectedTodo, {repeat: repeatOptions[index]});
-    this.reloadTodos();
+    await this.props.actions.createTodo(headline);
   };
 
   handleRepeatChange = async (e, todoId) => {
-    await updateTodo(todoId, {repeat: e.target.value});
+    await this.props.actions.updateTodo(todoId, {repeat: e.target.value});
     this.reloadTodos();
   };
 
   handleNextReminderChange = async (todoId, date) => {
-    await updateTodo(todoId, {nextReminder: date.toISOString()});
+    await this.props.actions.updateTodo(
+      todoId, {nextReminder: date.toISOString()});
     this.reloadTodos();
   };
 
   render() {
-    const {classes} = this.props;
-    const {todos, filtered, editing} = this.state;
+    const {classes, todos} = this.props;
+    const {filtered, editing} = this.state;
     return (
       <React.Fragment>
-        <Toolbar onCreate={this.create} onSearch={this.handleSearch} showSnooze={false}
+        <Toolbar onCreate={this.create}
+                 onSearch={this.handleSearch}
+                 showSnooze={false}
                  count={todos.size} />
         <Paper className={classes.root}>
           <List className={classes.root}>
-            {(filtered || todos.toJS())
+            {(filtered || todos)
               .map(n => {
                 return (
                   <React.Fragment>
@@ -210,8 +207,23 @@ class TodoList extends BaseTodoList {
   }
 }
 
+const mapStateToProps = state => state.toObject();
+
+const mapDispatchToProps = dispatch => {
+  return {
+    actions: bindActionCreators(ActionCreators, dispatch),
+    dispatch,
+  };
+};
+
 TodoList.propTypes = {
   classes: PropTypes.object.isRequired,
 };
 
-export default withStyles(styles)(TodoList);
+export default compose(
+  withStyles(styles),
+  connect(
+    mapStateToProps,
+    mapDispatchToProps,
+  )
+)(TodoList);

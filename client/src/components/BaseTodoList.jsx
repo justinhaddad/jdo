@@ -1,6 +1,4 @@
 import {debounce} from 'lodash';
-import {createTodo, deleteTodo, loadTodos, updateTodo} from '../api';
-import {fromJS} from "immutable";
 import React from 'react';
 import Sugar from 'sugar-date';
 
@@ -21,16 +19,8 @@ const repeatSugar = {
 
 export default class BaseTodoList extends React.Component {
   reloadTodos = async () => {
-    const {remote, remindersOnly, searchTxt} = this.state;
-    const todos = await loadTodos(remindersOnly);
-    let filtered = null;
-    if(searchTxt) {
-      filtered = todos.filter(t => t.headline.toLowerCase().includes(searchTxt.toLowerCase()));
-    }
-    this.setState({todos: fromJS(todos), filtered});
-    if(remote && todos.length === 0) {
-      remote.getCurrentWindow().hide();
-    }
+    const {remindersOnly, search} = this.state;
+    await this.props.actions.loadTodos({remindersOnly, search});
   };
 
   componentDidMount() {
@@ -39,9 +29,9 @@ export default class BaseTodoList extends React.Component {
   }
 
   handleToggleComplete = async (todoId, current) => {
-    await updateTodo(todoId, {complete: !current});
+    await this.props.actions.updateTodo(todoId, {complete: !current});
     // Create a new todo if repeat is set.
-    const todo = this.state.todos.toJS().filter(t => t.id === todoId)[0];
+    const todo = this.props.todos.filter(t => t.id === todoId)[0];
     if(!current && todo.repeat) {
       const dup = {
         created: todo.created,
@@ -51,22 +41,22 @@ export default class BaseTodoList extends React.Component {
         nextReminder: Sugar.Date.create(repeatSugar[todo.repeat]).toISOString(),
         repeat: todo.repeat,
       };
-      await createTodo(dup);
+      await this.props.actions.createTodo(dup);
     }
     this.reloadTodos();
   };
 
   handleSearch = debounce(searchTxt => {
-    const {todos} = this.state;
+    const {todos} = this.props;
     let filtered = null;
     if(searchTxt) {
-      filtered = todos.toJS().filter(t => t.headline.toLowerCase().includes(searchTxt.toLowerCase()));
+      filtered = todos.filter(t => t.headline.toLowerCase().includes(searchTxt.toLowerCase()));
     }
     this.setState({filtered, searchTxt});
   }, 200);
 
   handleSave = async (todo) => {
-    await updateTodo(todo.id, todo);
+    await this.props.actions.updateTodo(todo.id, todo);
     this.handleCloseEditDialog();
     this.reloadTodos();
   };
@@ -76,8 +66,7 @@ export default class BaseTodoList extends React.Component {
   };
 
   handleDelete = async id => {
-    await deleteTodo(id);
-    this.reloadTodos();
+    await this.props.actions.deleteTodo(id);
     this.handleCloseEditDialog();
   };
 

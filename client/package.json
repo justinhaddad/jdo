@@ -18,7 +18,10 @@
     "material-ui-pickers": "^2.0.4",
     "react": "16.4.0",
     "react-dom": "16.4.0",
+    "react-redux": "^6.0.0",
     "react-router-dom": "^4.3.1",
+    "redux": "^4.0.1",
+    "redux-thunk": "^2.3.0",
     "sugar": "^2.0.4",
     "sugar-date": "^2.0.6",
     "update-electron-app": "^1.2.0"
