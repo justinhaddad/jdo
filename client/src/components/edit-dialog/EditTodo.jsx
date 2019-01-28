@@ -84,7 +84,7 @@ class EditTodo extends React.Component {
           />
           <FormControl className={classes.formControl}>
             <Select className={classes.repeatSelect}
-                    value={todo ? todo.repeat : null}
+                    value={todo ? todo.repeat : ''}
                     onChange={this.handleChange}
                     inputProps={{
                       name: 'repeat',
@@ -92,7 +92,7 @@ class EditTodo extends React.Component {
                     }}
             >
               {repeatOptions.map(option => (
-                <MenuItem className={classes.repeats}
+                <MenuItem key={option} className={classes.repeats}
                           value={option}>{option.capitalize()}</MenuItem>
               ))}
             </Select>

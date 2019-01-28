@@ -85,7 +85,13 @@ const styles = theme => ({
   },
   editControl: {
     padding: 3,
-  }
+  },
+  rowButtons: {
+    position: 'relative',
+    top: -5,
+    marginLeft: 10,
+    display: 'inline',
+  },
 });
 
 class TodoList extends BaseTodoList {
@@ -103,7 +109,7 @@ class TodoList extends BaseTodoList {
 
   handleRepeatChange = async (e, todoId) => {
     await this.props.actions.updateTodo(todoId, {repeat: e.target.value});
-    this.reloadTodos();
+    // this.reloadTodos();
   };
 
   handleNextReminderChange = async (todoId, date) => {
@@ -113,24 +119,20 @@ class TodoList extends BaseTodoList {
   };
 
   render() {
-    const {classes, todos} = this.props;
+    let {classes, todos} = this.props;
     const {filtered, editing} = this.state;
     return (
       <React.Fragment>
         <Toolbar onCreate={this.create}
                  onSearch={this.handleSearch}
                  showSnooze={false}
-                 count={todos.size} />
+                 count={todos.length} />
         <Paper className={classes.root}>
           <List className={classes.root}>
-            {(filtered || todos)
-              .map(n => {
+            {(filtered || todos).map(n => {
                 return (
-                  <React.Fragment>
-                    <ListItem
-                      role="checkbox"
-                      key={n.id}
-                    >
+                  <React.Fragment key={n.id}>
+                    <ListItem role="checkbox">
                       <Grid container>
                         <Grid xs={1}>
                           <Checkbox className={classes.editControl}
@@ -148,16 +150,17 @@ class TodoList extends BaseTodoList {
                           </Typography>
                         </Grid>
                         <Grid item xs={3}>
-                          <Tooltip title={n.nextReminder ? Sugar.Date(n.nextReminder).relative().raw : null}>
+                          {n.nextReminder &&
+                          <Tooltip title={Sugar.Date(n.nextReminder).relative().raw}>
                             <NotificationsIcon className={classes.icon}/>
                           </Tooltip>
+                          }
                           <MuiPickersUtilsProvider utils={DateFnsUtils}>
                             <InlineDateTimePicker
                               keyboard
                               value={n.nextReminder}
                               onChange={date => this.handleNextReminderChange(n.id, date)}
                               label={null}
-                              showTodayButton
                               format="MMM do h:mm a"
                             />
                           </MuiPickersUtilsProvider>
@@ -166,7 +169,7 @@ class TodoList extends BaseTodoList {
                           <LoopIcon className={classes.icon}/>
                           <FormControl className={classes.formControl}>
                             <Select className={classes.repeatSelect}
-                                    value={n.repeat}
+                                    value={n.repeat || 'Never'}
                                     onChange={e => this.handleRepeatChange(e, n.id)}
                                     inputProps={{
                                       name: `repeat-${n.id}`,
@@ -174,11 +177,14 @@ class TodoList extends BaseTodoList {
                                     }}
                             >
                               {repeatOptions.map(option => (
-                                <MenuItem className={classes.repeats}
-                                          value={option}>{option.capitalize()}</MenuItem>
+                                <MenuItem key={`${n.id}${option}`}
+                                          className={classes.repeats}
+                                          value={option}>{option.capitalize()}
+                                </MenuItem>
                               ))}
                             </Select>
                           </FormControl>
+                          <div className={classes.rowButtons}>
                           <IconButton aria-label="Edit" className={classes.editControl}
                                       onClick={e => this.setState({editing: n})}>
                             <EditIcon/>
@@ -187,6 +193,7 @@ class TodoList extends BaseTodoList {
                                       onClick={() => this.handleDelete(n.id)}>
                             <DeleteIcon/>
                           </IconButton>
+                          </div>
                         </Grid>
                       </Grid>
                     </ListItem>

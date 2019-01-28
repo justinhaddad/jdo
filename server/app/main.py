@@ -10,8 +10,8 @@ from peewee import IntegrityError
 from playhouse.shortcuts import model_to_dict
 from wsgiref import simple_server
 
-from app.models import Todo, SnoozeAll, TodoList
-from app import models
+from models import Todo, SnoozeAll, TodoList
+import models
 
 DEFAULT_LIST = 'Reminders';
 count = 0
@@ -134,7 +134,7 @@ class Todos:
             t = Todo.create(list=list, **data)
             resp.body = json.dumps(model_to_dict(t), cls=Encoder)
             resp.status = falcon.HTTP_201
-        except IntegrityError as e:
+        except IntegrityError:
             log.exception('Failed to create todo.')
             resp.status = falcon.HTTP_422
 
@@ -154,6 +154,9 @@ class TodoItem:
             repeat = data.get('repeat', 'never')
             if repeat and repeat.lower() == 'never':
                 data['repeat'] = None
+        if 'complete' in data:
+            if data['complete'] and data.get('completed_on') is None:
+                data['completed_on'] = datetime.datetime.now()
         models.Todo.set_by_id(id, data)
         resp.status = falcon.HTTP_200
         todo = Todo.get_by_id(id)

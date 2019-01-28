@@ -29,9 +29,9 @@ export default class BaseTodoList extends React.Component {
   }
 
   handleToggleComplete = async (todoId, current) => {
+    const todo = this.props.todos.filter(t => t.id === todoId)[0];
     await this.props.actions.updateTodo(todoId, {complete: !current});
     // Create a new todo if repeat is set.
-    const todo = this.props.todos.filter(t => t.id === todoId)[0];
     if(!current && todo.repeat) {
       const dup = {
         created: todo.created,
@@ -43,7 +43,7 @@ export default class BaseTodoList extends React.Component {
       };
       await this.props.actions.createTodo(dup);
     }
-    this.reloadTodos();
+    // this.reloadTodos();
   };
 
   handleSearch = debounce(searchTxt => {
@@ -58,7 +58,7 @@ export default class BaseTodoList extends React.Component {
   handleSave = async (todo) => {
     await this.props.actions.updateTodo(todo.id, todo);
     this.handleCloseEditDialog();
-    this.reloadTodos();
+    // this.reloadTodos();
   };
 
   handleCloseEditDialog = () => {

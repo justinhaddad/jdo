@@ -22,12 +22,12 @@ const TYPES = {
   UPDATE_TODO_FAILURE: Symbol(),
 };
 
-const _loadTodos = (filter={remindersOnly: false}) => async dispatch => {
+const _loadTodos = (_filter={remindersOnly: false}) => async dispatch => {
   dispatch({type: TYPES.FETCH_TODOS});
-  const url = `${TODO_URL}?remindersOnly=${filter.remindersOnly}`;
+  const url = `${TODO_URL}?remindersOnly=${_filter.remindersOnly}`;
   const resp = await fetch(url);
   const json = await resp.json();
-  dispatch({type: TYPES.FETCH_TODOS_SUCCESS, payload: {todos: json.data, filter}});
+  dispatch({type: TYPES.FETCH_TODOS_SUCCESS, payload: {todos: json.data, filter: _filter}});
 };
 
 export const ActionCreators = Object.freeze({
@@ -65,21 +65,23 @@ export const ActionCreators = Object.freeze({
       },
       body: JSON.stringify(todo),
     });
-    const newTodo = resp.json();
+    const newTodo = await resp.json();
     dispatch({type: TYPES.CREATE_TODO_SUCCESS, payload: newTodo});
-    dispatch(_loadTodos());
+    // dispatch(_loadTodos());
   },
   updateTodo: (id, data)  => async dispatch => {
     dispatch({type: TYPES.UPDATE_TODO});
-    await fetch(`${TODO_URL}/${id}`, {
+    const resp = await fetch(`${TODO_URL}/${id}`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json; charset=utf-8',
       },
       body: JSON.stringify(data),
     });
-    dispatch({type: TYPES.UPDATE_TODO_SUCCESS});
-    dispatch(_loadTodos());
+    const updated = await resp.json();
+    console.log('Update resp:', updated);
+    dispatch({type: TYPES.UPDATE_TODO_SUCCESS, payload: updated});
+    // dispatch(_loadTodos());
   },
   deleteTodo: id => async dispatch => {
     dispatch({type: TYPES.DELETE_TODO});
@@ -87,7 +89,7 @@ export const ActionCreators = Object.freeze({
       method: 'DELETE',
     });
     dispatch({type: TYPES.DELETE_TODO_SUCCESS, payload: id});
-    dispatch(_loadTodos());
+    // dispatch(_loadTodos());
   },
   snoozeAll: seconds => async dispatch => {
     const end = Sugar.Date.create(`in ${seconds} seconds`).toISOString();
@@ -109,21 +111,30 @@ const initialState = fromJS({
 });
 
 const reducer = (state = initialState, action = {}) => {
+  let todos = state.get('todos');
   switch (action.type) {
     case TYPES.FETCH_TODOS:
       return state.set('loading', true);
     case TYPES.FETCH_TODOS_SUCCESS:
-      return state.merge({loading: false, ...action.payload});
+      const newState = {loading: false, ...action.payload};
+      return state.merge(newState);
     case TYPES.FETCH_TODOS_FAILURE:
       return state.merge({loading: false, error: action.payload});
     case TYPES.CREATE_TODO_SUCCESS:
-      // const t = state.get('todos').splice(0, 0, action.payload);
-      //return state.set('todos', fromJS(t));
-      return state;
+      if(state.get('filter').remindersOnly) {
+        return state;
+      }
+      todos.splice(0, 0, action.payload);
+      console.log('Spliced: ', todos);
+      return state.merge({'todos': todos});
     case TYPES.DELETE_TODO_SUCCESS:
-      // const t2 = state.get('todos').filter(t => t.id != action.payload)
-      // return state.set('todos', fromJS(t2));
-      return state;
+      todos = todos.filter(t => t.id != action.payload);
+      console.log('Filtered:', todos);
+      return state.set('todos', todos);
+    case TYPES.UPDATE_TODO_SUCCESS:
+      const match = todos.findIndex(t => t.id === action.payload.id);
+      todos[match] = action.payload;
+      return state.merge({'todos': todos});
     default:
       return state;
   }

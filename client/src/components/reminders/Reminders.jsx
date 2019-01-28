@@ -135,7 +135,7 @@ class Reminders extends BaseTodoList {
     const next = Sugar.Date.create(e.currentTarget.value);
     await this.props.actions.updateTodo(
       this.state.selected, {nextReminder: next.toISOString()});
-    this.reloadTodos();
+    // this.reloadTodos();
   };
 
   showSnoozePopover = (target, id, headline) => {
@@ -160,6 +160,9 @@ class Reminders extends BaseTodoList {
 
   render() {
     let {classes, todos} = this.props;
+    if(remote && todos.length === 0) {
+      remote.getCurrentWindow().hide();
+    }
     const {filtered, order, orderBy, anchorEl, editing} = this.state;
     const open = Boolean(anchorEl);
 
@@ -180,11 +183,8 @@ class Reminders extends BaseTodoList {
           {stableSort(filtered || todos, getSorting(order, orderBy))
             .map(n => {
               return (
-                <React.Fragment>
-                  <ListItem
-                    role="checkbox"
-                    key={n.id}
-                  >
+                <React.Fragment key={n.id}>
+                  <ListItem role="checkbox">
                     <Checkbox className={classes.editControl}
                       checked={n.complete}
                       tabIndex={-1}
@@ -245,7 +245,7 @@ class Reminders extends BaseTodoList {
           </Typography>
           <Divider/>
           {Object.keys(snoozeOptions).map(opt => (
-            <Button value={snoozeOptions[opt]}
+            <Button key={opt} value={snoozeOptions[opt]}
                     onClick={this.handleSnooze}>{opt}</Button>
           ))}
         </Popover>
