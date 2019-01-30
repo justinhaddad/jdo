@@ -1,26 +1,10 @@
-import { fromJS } from 'immutable';
-import Sugar from 'sugar-date';
-
-
+const Sugar = require('sugar-date');
+const TYPES = require('./const').ACTION_TYPES;
 const URL_BASE = 'http://localhost:5005';
 //const URL_BASE = 'http://ec2-3-17-36-180.us-east-2.compute.amazonaws.com';
 const TODO_URL = `${URL_BASE}/todos`;
 const SNOOZE_URL = `${URL_BASE}/snooze-all`;
 
-const TYPES = {
-  FETCH_TODOS: Symbol(),
-  FETCH_TODOS_SUCCESS: Symbol(),
-  FETCH_TODOS_FAILURE: Symbol(),
-  CREATE_TODO: Symbol(),
-  CREATE_TODO_SUCCESS: Symbol(),
-  CREATE_TODO_FAILURE: Symbol(),
-  DELETE_TODO: Symbol(),
-  DELETE_TODO_SUCCESS: Symbol(),
-  DELETE_TODO_FAILURE: Symbol(),
-  UPDATE_TODO: Symbol(),
-  UPDATE_TODO_SUCCESS: Symbol(),
-  UPDATE_TODO_FAILURE: Symbol(),
-};
 
 const _loadTodos = (_filter={remindersOnly: false}) => async dispatch => {
   dispatch({type: TYPES.FETCH_TODOS});
@@ -46,7 +30,6 @@ export const ActionCreators = Object.freeze({
           nextReminder = nextReminder.substring(nextReminder.indexOf('at') + 2);
         }
         try {
-          console.log('Parsing:', nextReminder);
           nextReminder = Sugar.Date.create(nextReminder);
           todo.nextReminder = nextReminder.toISOString();
         } catch(error) {
@@ -100,41 +83,48 @@ export const ActionCreators = Object.freeze({
       },
       body: JSON.stringify({end}),
     });
+    dispatch({type: TYPES.SNOOZE_ALL_SUCCESS, payload: end});
   },
 });
 
-const initialState = fromJS({
+const initialState = {
   loading: false,
   todos: [],
   errors: [],
   filters: {},
-});
+};
 
 const reducer = (state = initialState, action = {}) => {
-  let todos = state.get('todos');
+  console.log('DUCK STATE:', state);
+  let todos = state.todos ? [...state.todos] : [];
   switch (action.type) {
     case TYPES.FETCH_TODOS:
-      return state.set('loading', true);
+      return {...state, loading: true};
     case TYPES.FETCH_TODOS_SUCCESS:
-      const newState = {loading: false, ...action.payload};
-      return state.merge(newState);
+      return {...state, loading: false, ...action.payload};
     case TYPES.FETCH_TODOS_FAILURE:
       return state.merge({loading: false, error: action.payload});
     case TYPES.CREATE_TODO_SUCCESS:
-      if(state.get('filter').remindersOnly) {
+      if(state.filter.remindersOnly) {
         return state;
       }
       todos.splice(0, 0, action.payload);
       console.log('Spliced: ', todos);
-      return state.merge({'todos': todos});
+      return {...state, todos};
     case TYPES.DELETE_TODO_SUCCESS:
       todos = todos.filter(t => t.id != action.payload);
       console.log('Filtered:', todos);
-      return state.set('todos', todos);
+      return {...state, todos};
     case TYPES.UPDATE_TODO_SUCCESS:
       const match = todos.findIndex(t => t.id === action.payload.id);
-      todos[match] = action.payload;
-      return state.merge({'todos': todos});
+      if(state.filter.remindersOnly && todos[match].complete) {
+        todos.splice(match, 1);
+      } else {
+        todos[match] = action.payload;
+      }
+      return {...state, todos};
+    case TYPES.SNOOZE_ALL_SUCCESS:
+      return {...state, snoozeAllEnd: action.payload};
     default:
       return state;
   }

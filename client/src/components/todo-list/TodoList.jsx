@@ -103,6 +103,11 @@ class TodoList extends BaseTodoList {
     editing: false,
   };
 
+  componentDidMount() {
+    this.reloadTodos();
+    setInterval(this.reloadTodos, 60000);
+  }
+
   create = async headline => {
     await this.props.actions.createTodo(headline);
   };
@@ -120,6 +125,11 @@ class TodoList extends BaseTodoList {
 
   render() {
     let {classes, todos} = this.props;
+    console.log('Reminders TODOs:', todos);
+    if (!todos) {
+      todos = [];
+    }
+    console.log('TODOS:', todos);
     const {filtered, editing} = this.state;
     return (
       <React.Fragment>
@@ -214,7 +224,7 @@ class TodoList extends BaseTodoList {
   }
 }
 
-const mapStateToProps = state => state.toObject();
+const mapStateToProps = state => {return {...state}};
 
 const mapDispatchToProps = dispatch => {
   return {

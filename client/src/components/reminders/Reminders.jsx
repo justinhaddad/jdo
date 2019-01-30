@@ -160,9 +160,14 @@ class Reminders extends BaseTodoList {
 
   render() {
     let {classes, todos} = this.props;
-    if(remote && todos.length === 0) {
-      remote.getCurrentWindow().hide();
+    if (!todos) {
+      todos = [];
     }
+    todos = todos.filter(t => !t.complete && t.nextReminder &&
+      new Date(t.nextReminder) <= new Date());
+    // if(remote && todos.length === 0) {
+    //   remote.getCurrentWindow().hide();
+    // }
     const {filtered, order, orderBy, anchorEl, editing} = this.state;
     const open = Boolean(anchorEl);
 
@@ -259,7 +264,7 @@ class Reminders extends BaseTodoList {
   }
 }
 
-const mapStateToProps = state => state.toObject();
+const mapStateToProps = state => {return {...state}};
 
 const mapDispatchToProps = dispatch => {
   return {

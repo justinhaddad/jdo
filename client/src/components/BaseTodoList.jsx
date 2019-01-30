@@ -23,11 +23,6 @@ export default class BaseTodoList extends React.Component {
     await this.props.actions.loadTodos({remindersOnly, search});
   };
 
-  componentDidMount() {
-    this.reloadTodos();
-    setInterval(this.reloadTodos, 5000);
-  }
-
   handleToggleComplete = async (todoId, current) => {
     const todo = this.props.todos.filter(t => t.id === todoId)[0];
     await this.props.actions.updateTodo(todoId, {complete: !current});
