@@ -28,7 +28,7 @@ import Tooltip from '@material-ui/core/Tooltip';
 import Typography from '@material-ui/core/Typography';
 
 import BaseTodoList from '../BaseTodoList';
-import {ActionCreators} from '../../todoDuck';
+import {ActionCreators} from '../../actions';
 
 
 String.prototype.capitalize = function () {

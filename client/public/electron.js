@@ -6,8 +6,7 @@ const path = require("path");
 const isDev = require("electron-is-dev");
 const forwardToRenderer  = require('electron-redux').forwardToRenderer;
 const replayActionMain = require('electron-redux').replayActionMain;
-// const duck = require('../src/todoDuck');
-const TYPES = require('../src/const').ACTION_TYPES;
+const {reducer} = require('../src/reducer');
 
 let mainWindow;
 let reminderWindow;
@@ -22,18 +21,8 @@ require("update-electron-app")({
 
 const initialState = {'todos': []};
 
-const reducer = (state = initialState, action = {}) => {
-  console.log('Electorn action', action);
-  console.log('Electron state:', state);
-  const newState = {...state};
-  switch(action.type) {
-    case TYPES.FETCH_TODOS_SUCCESS:
-      newState.todos = action.payload.todos;
-      break;
-    case TYPES.SNOOZE_ALL_SUCCESS:
-      newState.snoozeAllEnd = action.payload;
-      break;
-  }
+const reducerWrapper = (state = initialState, action = {}) => {
+  const newState = reducer(state, action);
   if (reminderWindow) {
     if ((newState.snoozeAllEnd && new Date(newState.snoozeAllEnd) > new Date())
       || newState.todos.findIndex(t => !t.complete && new Date(t.nextReminder) < new Date()) < 0) {
@@ -47,10 +36,11 @@ const reducer = (state = initialState, action = {}) => {
 };
 
 
-let store = createStore(reducer,
+let store = createStore(
+  reducerWrapper,
   compose(
     applyMiddleware(thunk, forwardToRenderer),
-  )
+  ),
 );
 
 replayActionMain(store);

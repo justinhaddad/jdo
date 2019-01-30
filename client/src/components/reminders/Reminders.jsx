@@ -21,15 +21,9 @@ import Sugar from 'sugar-date';
 import Toolbar from '../toolbar/Toolbar';
 import {withStyles} from '@material-ui/core/styles';
 import {bindActionCreators, compose} from 'redux';
-import {ActionCreators} from '../../todoDuck';
+import {ActionCreators} from '../../actions';
 import {connect} from 'react-redux';
 
-let remote;
-try {
-  remote = window.require('electron').remote;
-} catch(e) {
-  console.log('Not running in electron.');
-}
 
 const snoozeOptions = {
   '5m': 'in 5 minutes',
@@ -126,7 +120,6 @@ class Reminders extends BaseTodoList {
     order: 'desc',
     searchTxt: null,
     editing: false,
-    remote: window.require('electron').remote,
     remindersOnly: true,
 };
 
@@ -135,7 +128,6 @@ class Reminders extends BaseTodoList {
     const next = Sugar.Date.create(e.currentTarget.value);
     await this.props.actions.updateTodo(
       this.state.selected, {nextReminder: next.toISOString()});
-    // this.reloadTodos();
   };
 
   showSnoozePopover = (target, id, headline) => {
@@ -153,9 +145,6 @@ class Reminders extends BaseTodoList {
 
   handleSnoozeAll = () => {
     this.props.actions.snoozeAll(300);
-    if (remote) {
-      remote.getCurrentWindow().hide();
-    }
   };
 
   render() {
@@ -165,9 +154,6 @@ class Reminders extends BaseTodoList {
     }
     todos = todos.filter(t => !t.complete && t.nextReminder &&
       new Date(t.nextReminder) <= new Date());
-    // if(remote && todos.length === 0) {
-    //   remote.getCurrentWindow().hide();
-    // }
     const {filtered, order, orderBy, anchorEl, editing} = this.state;
     const open = Boolean(anchorEl);
 
