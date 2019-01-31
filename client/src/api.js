@@ -27,7 +27,6 @@ export const xcreateTodo = async arg => {
         nextReminder = nextReminder.substring(nextReminder.indexOf('at') + 2);
       }
       try {
-        console.log('Parsing:', nextReminder);
         nextReminder = Sugar.Date.create(nextReminder);
         todo.nextReminder = nextReminder.toISOString();
       } catch(error) {
@@ -39,7 +38,6 @@ export const xcreateTodo = async arg => {
       todo['repeat'] = parts[2].trim().toLowerCase();
     }
   }
-  console.log('Creating Todo: ', todo);
   const resp = await fetch(TODO_URL, {
     method: 'POST',
     headers: {

@@ -62,9 +62,7 @@ export const ActionCreators = Object.freeze({
       body: JSON.stringify(data),
     });
     const updated = await resp.json();
-    console.log('Update resp:', updated);
     dispatch({type: TYPES.UPDATE_TODO_SUCCESS, payload: updated});
-    // dispatch(_loadTodos());
   },
   deleteTodo: id => async dispatch => {
     dispatch({type: TYPES.DELETE_TODO});
@@ -72,7 +70,6 @@ export const ActionCreators = Object.freeze({
       method: 'DELETE',
     });
     dispatch({type: TYPES.DELETE_TODO_SUCCESS, payload: id});
-    // dispatch(_loadTodos());
   },
   snoozeAll: seconds => async dispatch => {
     const end = Sugar.Date.create(`in ${seconds} seconds`).toISOString();

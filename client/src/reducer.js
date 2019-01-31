@@ -21,11 +21,9 @@ const reducer = (state = initialState, action = {}) => {
         return state;
       }
       todos.splice(0, 0, action.payload);
-      console.log('Spliced: ', todos);
       return {...state, todos};
     case TYPES.DELETE_TODO_SUCCESS:
       todos = todos.filter(t => t.id != action.payload);
-      console.log('Filtered:', todos);
       return {...state, todos};
     case TYPES.UPDATE_TODO_SUCCESS:
       const match = todos.findIndex(t => t.id === action.payload.id);
