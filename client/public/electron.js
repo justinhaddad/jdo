@@ -26,8 +26,10 @@ const reducerWrapper = (state = initialState, action = {}) => {
   if (reminderWindow) {
     if ((newState.snoozeAllEnd && new Date(newState.snoozeAllEnd) > new Date())
       || newState.todos.findIndex(t => !t.complete && new Date(t.nextReminder) < new Date()) < 0) {
-      reminderWindow.hide();
-      mainWindow.hide();
+      if(reminderWindow.isVisible()) {
+        reminderWindow.hide();
+        mainWindow.hide();
+      }
     } else {
       reminderWindow.showInactive();
       reminderWindow.setAlwaysOnTop(true, 'screen-saver');
