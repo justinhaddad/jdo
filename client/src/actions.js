@@ -1,3 +1,5 @@
+import {snoozeOptions} from './const';
+
 const Sugar = require('sugar-date');
 const TYPES = require('./const').ACTION_TYPES;
 const URL_BASE = 'http://localhost:5005';
@@ -28,6 +30,10 @@ export const ActionCreators = Object.freeze({
         let nextReminder = parts[1].trim();
         if(nextReminder.startsWith('at')) {
           nextReminder = nextReminder.substring(nextReminder.indexOf('at') + 2);
+        }
+        // Support snooze options
+        if(nextReminder.toLowerCase() in snoozeOptions) {
+          nextReminder = snoozeOptions[nextReminder.toLowerCase()];
         }
         try {
           nextReminder = Sugar.Date.create(nextReminder);

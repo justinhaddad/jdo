@@ -6,15 +6,15 @@ const repeatSugar = {
   'hourly': 'in an hour',
   'daily': 'tomorrow at noon',
   'nightly': 'tomorrow at 5pm',
-  'weekly': 'next Sunday',
+  'weekly': 'Sunday noon',
   'monthly': 'the beginning of next month',
-  'sundays': 'next Sunday',
-  'mondays': 'next Monday',
-  'tuesdays': 'next Tuesday',
-  'wednesdays': 'next Wednesday',
-  'thursdays': 'next Thursday',
-  'fridays': 'next Friday',
-  'saturdays': 'next Saturday',
+  'sundays': 'Sunday noon',
+  'mondays': 'Monday noon',
+  'tuesdays': 'Tuesday noon',
+  'wednesdays': 'Wednesday noon',
+  'thursdays': 'Thursday noon',
+  'fridays': 'Friday noon',
+  'saturdays': 'Saturday noon',
 };
 
 export default class BaseTodoList extends React.Component {
@@ -38,7 +38,6 @@ export default class BaseTodoList extends React.Component {
       };
       await this.props.actions.createTodo(dup);
     }
-    // this.reloadTodos();
   };
 
   handleSearch = debounce(searchTxt => {

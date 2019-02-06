@@ -8,40 +8,7 @@ import Typography from '@material-ui/core/Typography';
 import Zoom from '@material-ui/core/Zoom';
 import {withStyles} from '@material-ui/core/styles/index';
 import {compose} from 'redux';
-
-const snoozeOptions = {
-  '5m': 'in 5 minutes',
-  '15m': 'in 15 minutes',
-  '30m': 'in 30 minutes',
-  '45m': 'in 45 minutes',
-  '1h': 'in 1 hour',
-  '2h': 'in 2 hours',
-  '3h': 'in 3 hours',
-  '4h': 'in 4 hours',
-  '8h': 'in 8 hours',
-  '12h': 'in 12 hours',
-  '20h': 'in 20 hours',
-  '1d': 'in 1 day',
-  '2d': 'in 2 days',
-  '3d': 'in 3 days',
-  '1w': 'in 1 week',
-  '2w': 'in 2 weeks',
-  '1mo': 'in 1 month',
-  '3mo': 'in 3 months',
-  '6mo': 'in 6 months',
-  '1y': 'in 1 year',
-  'tonight': '6pm',
-  'morrow morn': 'tomorrow at 9am',
-  'morrow noon': 'tomorrow at noon',
-  'morrow eve': 'tomorrow at 5pm',
-  'Su': 'next Sunday at noon',
-  'M': 'next Monday at noon',
-  'Tu': 'next Tuesday at noon',
-  'W': 'next Wednesday at noon',
-  'Th': 'next Thursday at noon',
-  'F': 'next Friday at noon',
-  'Sa': 'next Saturday at noon',
-};
+import {snoozeOptions} from '../../const';
 
 const styles = theme => ({
   popoverTitle: {
