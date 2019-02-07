@@ -56,7 +56,6 @@ export const ActionCreators = Object.freeze({
     });
     const newTodo = await resp.json();
     dispatch({type: TYPES.CREATE_TODO_SUCCESS, payload: newTodo});
-    // dispatch(_loadTodos());
   },
   updateTodo: (id, data)  => async dispatch => {
     dispatch({type: TYPES.UPDATE_TODO});

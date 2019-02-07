@@ -26,6 +26,10 @@ export default class BaseTodoList extends React.Component {
   handleToggleComplete = async (todoId, current) => {
     const todo = this.props.todos.filter(t => t.id === todoId)[0];
     await this.props.actions.updateTodo(todoId, {complete: !current});
+    let nextReminder = Sugar.Date(repeatSugar[todo.repeat]);
+    if(nextReminder.isPast().raw) {
+      nextReminder = Sugar.Date(`next ${repeatSugar[todo.repeat]}`);
+    }
     // Create a new todo if repeat is set.
     if(!current && todo.repeat) {
       const dup = {
@@ -33,7 +37,7 @@ export default class BaseTodoList extends React.Component {
         headline: todo.headline,
         note: todo.note,
         priority: todo.priority,
-        nextReminder: Sugar.Date.create(repeatSugar[todo.repeat]).toISOString(),
+        nextReminder: nextReminder.toISOString().raw,
         repeat: todo.repeat,
       };
       await this.props.actions.createTodo(dup);
@@ -52,7 +56,6 @@ export default class BaseTodoList extends React.Component {
   handleSave = async (todo) => {
     await this.props.actions.updateTodo(todo.id, todo);
     this.handleCloseEditDialog();
-    // this.reloadTodos();
   };
 
   handleCloseEditDialog = () => {
