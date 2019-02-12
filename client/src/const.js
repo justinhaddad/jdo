@@ -47,3 +47,18 @@ module.exports.snoozeOptions = {
   'F': 'Friday at noon',
   'Sa': 'Saturday at noon',
 };
+
+module.exports.repeatSugar = {
+  'hourly': 'in an hour',
+  'daily': 'tomorrow at noon',
+  'nightly': 'tomorrow at 5pm',
+  'weekly': 'Sunday noon',
+  'monthly': 'the beginning of next month',
+  'sundays': 'Sunday noon',
+  'mondays': 'Monday noon',
+  'tuesdays': 'Tuesday noon',
+  'wednesdays': 'Wednesday noon',
+  'thursdays': 'Thursday noon',
+  'fridays': 'Friday noon',
+  'saturdays': 'Saturday noon',
+};

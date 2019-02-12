@@ -125,11 +125,9 @@ class TodoList extends BaseTodoList {
 
   render() {
     let {classes, todos} = this.props;
-    console.log('Reminders TODOs:', todos);
     if (!todos) {
       todos = [];
     }
-    console.log('TODOS:', todos);
     const {filtered, editing} = this.state;
     return (
       <React.Fragment>

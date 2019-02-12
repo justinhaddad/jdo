@@ -16,8 +16,21 @@ const _loadTodos = (_filter={remindersOnly: false}) => async dispatch => {
   dispatch({type: TYPES.FETCH_TODOS_SUCCESS, payload: {todos: json.data, filter: _filter}});
 };
 
+const parseDateTime = nextReminderSugar => {
+  if (nextReminderSugar.startsWith('at')) {
+    // Sugar doesn't like the 'at' in 'at 5pm', so strip it.
+    nextReminderSugar = nextReminderSugar.substring(nextReminderSugar.indexOf('at') + 2);
+  }
+  // Support snooze options
+  if (nextReminderSugar in snoozeOptions) {
+    nextReminderSugar = snoozeOptions[nextReminderSugar];
+  }
+  return Sugar.Date.create(nextReminderSugar, {future: true});
+};
+
 export const ActionCreators = Object.freeze({
   loadTodos: _loadTodos,
+
   createTodo: arg => async dispatch => {
     dispatch({type: TYPES.CREATE_TODO});
     let todo = arg;
@@ -27,17 +40,8 @@ export const ActionCreators = Object.freeze({
         headline: parts[0],
       };
       if (parts.length > 1 && parts[1].trim()) {
-        let nextReminder = parts[1].trim();
-        if(nextReminder.startsWith('at')) {
-          nextReminder = nextReminder.substring(nextReminder.indexOf('at') + 2);
-        }
-        // Support snooze options
-        if(nextReminder.toLowerCase() in snoozeOptions) {
-          nextReminder = snoozeOptions[nextReminder.toLowerCase()];
-        }
         try {
-          nextReminder = Sugar.Date.create(nextReminder);
-          todo.nextReminder = nextReminder.toISOString();
+          todo.nextReminder = parseDateTime(parts[1].trim().toLowerCase());
         } catch(error) {
           console.error('Failed to parse nextReminder with SugarJS.', error);
           return null;
@@ -57,6 +61,7 @@ export const ActionCreators = Object.freeze({
     const newTodo = await resp.json();
     dispatch({type: TYPES.CREATE_TODO_SUCCESS, payload: newTodo});
   },
+
   updateTodo: (id, data)  => async dispatch => {
     dispatch({type: TYPES.UPDATE_TODO});
     const resp = await fetch(`${TODO_URL}/${id}`, {
@@ -69,6 +74,7 @@ export const ActionCreators = Object.freeze({
     const updated = await resp.json();
     dispatch({type: TYPES.UPDATE_TODO_SUCCESS, payload: updated});
   },
+
   deleteTodo: id => async dispatch => {
     dispatch({type: TYPES.DELETE_TODO});
     await fetch(`${TODO_URL}/${id}`, {
@@ -76,6 +82,7 @@ export const ActionCreators = Object.freeze({
     });
     dispatch({type: TYPES.DELETE_TODO_SUCCESS, payload: id});
   },
+
   snoozeAll: seconds => async dispatch => {
     const end = Sugar.Date.create(`in ${seconds} seconds`).toISOString();
     await fetch(`${SNOOZE_URL}`, {

@@ -21,6 +21,7 @@ import Toolbar from '../toolbar/Toolbar';
 import {withStyles} from '@material-ui/core/styles';
 import {bindActionCreators, compose} from 'redux';
 import {connect} from 'react-redux';
+import {repeatSugar} from '../../const';
 
 const styles = theme => ({
   root: {
@@ -82,9 +83,12 @@ class Reminders extends BaseTodoList {
   };
 
   handleSnooze = async (id, value) => {
-    const next = Sugar.Date.create(value);
+    let nextReminder = Sugar.Date(value);
+    if(nextReminder.isPast().raw) {
+      nextReminder = Sugar.Date(`next ${value}`);
+    }
     await this.props.actions.updateTodo(
-      id, {nextReminder: next.toISOString()});
+      id, {nextReminder: nextReminder.toISOString().raw});
   };
 
   handleSnoozeAll = () => {

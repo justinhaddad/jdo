@@ -1,21 +1,8 @@
 import {debounce} from 'lodash';
 import React from 'react';
 import Sugar from 'sugar-date';
+import {repeatSugar} from '../const';
 
-const repeatSugar = {
-  'hourly': 'in an hour',
-  'daily': 'tomorrow at noon',
-  'nightly': 'tomorrow at 5pm',
-  'weekly': 'Sunday noon',
-  'monthly': 'the beginning of next month',
-  'sundays': 'Sunday noon',
-  'mondays': 'Monday noon',
-  'tuesdays': 'Tuesday noon',
-  'wednesdays': 'Wednesday noon',
-  'thursdays': 'Thursday noon',
-  'fridays': 'Friday noon',
-  'saturdays': 'Saturday noon',
-};
 
 export default class BaseTodoList extends React.Component {
   reloadTodos = async () => {
@@ -26,10 +13,7 @@ export default class BaseTodoList extends React.Component {
   handleToggleComplete = async (todoId, current) => {
     const todo = this.props.todos.filter(t => t.id === todoId)[0];
     await this.props.actions.updateTodo(todoId, {complete: !current});
-    let nextReminder = Sugar.Date(repeatSugar[todo.repeat]);
-    if(nextReminder.isPast().raw) {
-      nextReminder = Sugar.Date(`next ${repeatSugar[todo.repeat]}`);
-    }
+    const nextReminder = Sugar.Date.create(repeatSugar[todo.repeat], {future: true});
     // Create a new todo if repeat is set.
     if(!current && todo.repeat) {
       const dup = {
@@ -37,7 +21,7 @@ export default class BaseTodoList extends React.Component {
         headline: todo.headline,
         note: todo.note,
         priority: todo.priority,
-        nextReminder: nextReminder.toISOString().raw,
+        nextReminder: nextReminder.toISOString(),
         repeat: todo.repeat,
       };
       await this.props.actions.createTodo(dup);
