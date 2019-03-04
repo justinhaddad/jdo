@@ -4,11 +4,12 @@ const initialState = {
   loading: false,
   todos: [],
   errors: [],
-  filters: {},
+  filtered: null,
 };
 
 const reducer = (state = initialState, action = {}) => {
   let todos = state.todos ? [...state.todos] : [];
+  let filtered = state.filtered ? [...state.filtered] : null;
   switch (action.type) {
     case TYPES.FETCH_TODOS:
       return {...state, loading: true};
@@ -24,15 +25,19 @@ const reducer = (state = initialState, action = {}) => {
       return {...state, todos};
     case TYPES.DELETE_TODO_SUCCESS:
       todos = todos.filter(t => t.id !== action.payload);
-      return {...state, todos};
+      return {...state, todos, filtered};
     case TYPES.UPDATE_TODO_SUCCESS:
-      const match = todos.findIndex(t => t.id === action.payload.id);
+      let match = todos.findIndex(t => t.id === action.payload.id);
       if(state.filter.remindersOnly && todos[match].complete) {
         todos.splice(match, 1);
       } else {
         todos[match] = action.payload;
       }
-      return {...state, todos};
+      if (filtered) {
+        let match = filtered.findIndex(t => t.id === action.payload.id);
+        filtered[match] = action.payload;
+      }
+      return {...state, todos, filtered};
     case TYPES.SNOOZE_ALL_SUCCESS:
       return {...state, snoozeAllEnd: action.payload};
     default:

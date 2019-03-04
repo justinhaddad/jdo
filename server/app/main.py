@@ -1,18 +1,20 @@
 import datetime
 from datetime import datetime as dt
-import re
-import sys
-
 import falcon
+from functools import reduce
 import json
 import logging
+import operator
 from peewee import IntegrityError
 from playhouse.shortcuts import model_to_dict
+import re
+import sys
 from wsgiref import simple_server
 
-from models import Todo, SnoozeAll, TodoList
 import models
+from models import Todo, SnoozeAll, TodoList
 
+logging.basicConfig(level=logging.DEBUG)
 DEFAULT_LIST = 'Reminders';
 count = 0
 models.connect()
@@ -107,16 +109,23 @@ class CamelSnake:
 
 class Todos:
     def on_get(self, req, resp):
+        clauses = [(Todo.complete == 0)]
+        if req.get_param('search'):
+            clauses.append((Todo.headline.contains(req.get_param('search'))))
         if req.get_param_as_bool('remindersOnly'):
             if SnoozeAll.select().where(
                     SnoozeAll.end < dt.utcnow().isoformat()).count() == 0:
                 todos = []
             else:
-                todos = Todo.select().where(
-                    (Todo.next_reminder <= dt.utcnow().isoformat()) &
-                    (Todo.complete == 0)).order_by(Todo.next_reminder)
+                clauses.append((Todo.next_reminder <= dt.utcnow().isoformat()))
+                todos = Todo.select().where(reduce(operator.and_,
+                                                   clauses)).order_by(
+                    Todo.next_reminder)
         else:
-            todos = Todo.select().where(Todo.complete == 0).order_by(
+            todos = Todo.select(
+                Todo.id, Todo.complete, Todo.headline, Todo.next_reminder,
+                Todo.repeat).where(reduce(operator.and_,
+                                          clauses)).order_by(
                 Todo.next_reminder.asc())
         ret = []
         for t in todos:
@@ -185,4 +194,8 @@ api.add_route('/snooze-all', SnoozeAllItem())
 
 if __name__ == '__main__':
     httpd = simple_server.make_server('127.0.0.1', 5005, api)
+    logger = logging.getLogger('peewee')
+    logger.addHandler(logging.StreamHandler())
+    logger.setLevel(logging.DEBUG)
+    logging.getLogger().setLevel(logging.DEBUG)
     httpd.serve_forever()

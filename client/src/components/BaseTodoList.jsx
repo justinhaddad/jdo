@@ -5,8 +5,13 @@ import {repeatSugar} from '../const';
 
 
 export default class BaseTodoList extends React.Component {
-  reloadTodos = async () => {
-    const {remindersOnly, search} = this.state;
+  reloadTodos = async (search = null) => {
+    const {remindersOnly} = this.state;
+    if (search == null) {
+      search = this.state.search;
+    } else {
+      this.setState({search});
+    }
     await this.props.actions.loadTodos({remindersOnly, search});
   };
 
@@ -29,12 +34,7 @@ export default class BaseTodoList extends React.Component {
   };
 
   handleSearch = debounce(searchTxt => {
-    const {todos} = this.props;
-    let filtered = null;
-    if(searchTxt) {
-      filtered = todos.filter(t => t.headline.toLowerCase().includes(searchTxt.toLowerCase()));
-    }
-    this.setState({filtered, searchTxt});
+    this.reloadTodos(searchTxt);
   }, 200);
 
   handleSave = async (todo) => {

@@ -10,7 +10,10 @@ const SNOOZE_URL = `${URL_BASE}/snooze-all`;
 
 const _loadTodos = (_filter={remindersOnly: false}) => async dispatch => {
   dispatch({type: TYPES.FETCH_TODOS});
-  const url = `${TODO_URL}?remindersOnly=${_filter.remindersOnly}`;
+  let url = `${TODO_URL}?remindersOnly=${_filter.remindersOnly}`;
+  if (_filter.search) {
+    url += `&search=${_filter.search}`;
+  }
   const resp = await fetch(url);
   const json = await resp.json();
   dispatch({type: TYPES.FETCH_TODOS_SUCCESS, payload: {todos: json.data, filter: _filter}});
