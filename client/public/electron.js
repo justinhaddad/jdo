@@ -26,7 +26,7 @@ const reducerWrapper = (state = initialState, action = {}) => {
   if (reminderWindow) {
     if ((newState.snoozeAllEnd && new Date(newState.snoozeAllEnd) > new Date())
       || newState.todos.findIndex(t => !t.complete && new Date(t.nextReminder) < new Date()) < 0) {
-      if(reminderWindow.isVisible()) {
+      if(reminderWindow.isFocused() && !newState.filter.search) {
         reminderWindow.hide();
         mainWindow.hide();
       }
@@ -87,7 +87,7 @@ function createWindow() {
 }
 
 function createTrayIcon() {
-  const icon = path.join(__dirname, '/logo.png');
+  const icon = path.join(__dirname, '/tray-icon.png');
   tray = new Tray(icon);
 
   tray.on('click', () => {

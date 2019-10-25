@@ -30,6 +30,7 @@ export default class BaseTodoList extends React.Component {
         repeat: todo.repeat,
       };
       await this.props.actions.createTodo(dup);
+      await this.reloadTodos();
     }
   };
 

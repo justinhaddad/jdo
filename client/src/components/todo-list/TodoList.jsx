@@ -138,6 +138,7 @@ class TodoList extends BaseTodoList {
         <Paper className={classes.root}>
           <List className={classes.root}>
             {(filtered || todos).map(n => {
+                console.log('Next: ', n);
                 return (
                   <React.Fragment key={n.id}>
                     <ListItem role="checkbox">

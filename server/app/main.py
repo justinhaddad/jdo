@@ -124,8 +124,8 @@ class Todos:
         else:
             todos = Todo.select(
                 Todo.id, Todo.complete, Todo.headline, Todo.next_reminder,
-                Todo.repeat).where(reduce(operator.and_,
-                                          clauses)).order_by(
+                Todo.repeat, Todo.created).where(reduce(operator.and_,
+                                                 clauses)).order_by(
                 Todo.next_reminder.asc())
         ret = []
         for t in todos:

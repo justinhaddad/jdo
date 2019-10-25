@@ -50,8 +50,8 @@ module.exports.snoozeOptions = {
 
 module.exports.repeatSugar = {
   'hourly': 'in an hour',
-  'daily': 'tomorrow at noon',
-  'nightly': 'tomorrow at 5pm',
+  'daily': 'at noon',
+  'nightly': '5pm',
   'weekly': 'Sunday noon',
   'monthly': 'the beginning of next month',
   'sundays': 'Sunday noon',
