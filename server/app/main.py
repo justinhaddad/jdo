@@ -1,3 +1,4 @@
+import dateparser
 import datetime
 from datetime import datetime as dt
 import falcon
@@ -13,6 +14,7 @@ from wsgiref import simple_server
 
 import models
 from models import Todo, SnoozeAll, TodoList
+from constants import REPEATS
 
 logging.basicConfig(level=logging.DEBUG)
 DEFAULT_LIST = 'Reminders';
@@ -155,21 +157,35 @@ class TodoItem:
 
     def on_patch(self, req, resp, id):
         data = req.context['body']
-        # Temp delete list since its not editable yet.
+        log.error(f'DATA: {data}')
+        # Not supporting list changes yet.
         if 'list' in data:
-            del data['list'];
+            del data['list']
+        todo = model_to_dict(Todo.get_by_id(id))
+        todo.update(data)
+        if 'repeat' in data and data.get('repeat', 'never') == 'never':
+            todo['repeat'] = None
+        log.error(f'PATCHING: {todo}')
+        if 'complete' in data and data['complete']:
+            if data.get('completed_on') is None:
+                data['completed_on'] = dt.now()
+            if todo.get('repeat') is not None:
+                next_reminder = dateparser.parse(
+                    REPEATS[todo['repeat']],
+                    settings={'PREFER_DATES_FROM': 'future'})
+                dup = dict(todo)
+                dup.update({
+                    'next_reminder': next_reminder,
+                    'list': todo['list']['id'],
+                    'complete': False,
+                    'created': dt.utcnow(),
+                })
+                del dup['id']
+                Todo.create(**dup)
 
-        if 'repeat' in data:
-            repeat = data.get('repeat', 'never')
-            if repeat and repeat.lower() == 'never':
-                data['repeat'] = None
-        if 'complete' in data:
-            if data['complete'] and data.get('completed_on') is None:
-                data['completed_on'] = datetime.datetime.now()
         models.Todo.set_by_id(id, data)
         resp.status = falcon.HTTP_200
-        todo = Todo.get_by_id(id)
-        resp.body = json.dumps(model_to_dict(todo), cls=Encoder)
+        resp.body = json.dumps(todo, cls=Encoder)
 
 
 class SnoozeAllItem:

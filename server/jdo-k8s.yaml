@@ -58,7 +58,7 @@ spec:
             claimName: jdo-pv-claim
       containers:
       - name: jdo-server
-        image: server_jdo-service:1.0
+        image: server_jdo-service:latest
         ports:
           - containerPort: 8000
         volumeMounts:

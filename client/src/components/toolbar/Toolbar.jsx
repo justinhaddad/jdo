@@ -10,6 +10,7 @@ import IconButton from '@material-ui/core/IconButton';
 import InputAdornment from '@material-ui/core/InputAdornment';
 import InputBase from '@material-ui/core/InputBase';
 import {repeatOptions} from '../constants';
+import CheckBoxIcon from '@material-ui/icons/CheckBox';
 import SearchIcon from '@material-ui/icons/Search';
 import SnoozeIcon from '@material-ui/icons/Snooze';
 import Sugar from 'sugar-date';
@@ -39,6 +40,7 @@ const toolbarStyles = theme => ({
   },
   actions: {
     color: theme.palette.text.secondary,
+    display: 'flex',
   },
   title: {
     flex: '0 0 auto',
@@ -48,9 +50,10 @@ const toolbarStyles = theme => ({
   },
   bar: {
     marginBottom: 0,
-    height: 80,
+    height: 50,
   },
   search: {
+    display: 'flex',
     position: 'relative',
     borderRadius: theme.shape.borderRadius,
     backgroundColor: fade(theme.palette.common.white, 0.15),
@@ -58,6 +61,7 @@ const toolbarStyles = theme => ({
       backgroundColor: fade(theme.palette.common.white, 0.25),
     },
     marginLeft: 0,
+    marginBottom: 15,
     width: '100%',
     [theme.breakpoints.up('sm')]: {
       marginLeft: theme.spacing.unit,
@@ -99,7 +103,7 @@ const toolbarStyles = theme => ({
     transition: theme.transitions.create('width'),
     width: '100%',
     [theme.breakpoints.up('sm')]: {
-      width: 100,
+      width: 50,
       '&:focus': {
         width: 400,
       },
@@ -109,7 +113,9 @@ const toolbarStyles = theme => ({
     color: theme.palette.text.primary,
   },
   info: {
+    textAlign: 'left',
     width: 300,
+    marginBottom: 10,
   },
   error: {
     position: 'relative',
@@ -169,7 +175,7 @@ class EnhancedTableToolbar extends React.Component {
   };
 
   render() {
-    const {classes, onCreate, showSnooze, count, onSnoozeAll} = this.props;
+    const {classes, onCreate, showSnooze, count, onSnoozeAll, onCompleteRecurring} = this.props;
     const {headline, searchText, errorMessage} = this.state;
 
     return (
@@ -180,6 +186,7 @@ class EnhancedTableToolbar extends React.Component {
           <Typography variant="h6" className={classes.barText}>Total: {count}</Typography>
         </div>
         {onCreate &&
+          <React.Fragment>
           <div className={classes.search}>
             <div className={classes.searchIcon}>
               <AddIcon/>
@@ -196,40 +203,45 @@ class EnhancedTableToolbar extends React.Component {
               error={!!errorMessage}
             />
           </div>
-        }
-        <div className={classes.spacer}/>
-        <div className={classes.search}>
-          <div className={classes.searchIcon}>
-            <SearchIcon />
+          <div className={classes.spacer}/>
+          <div className={classes.search}>
+            <div className={classes.searchIcon}>
+              <SearchIcon />
+            </div>
+            <InputBase
+              placeholder="Search…"
+              classes={{
+                root: classes.inputRoot,
+                input: classes.searchInput,
+              }}
+              value={searchText}
+              onChange={this.onSearch}
+              endAdornment={
+                <InputAdornment position="end">
+                  <IconButton
+                    aria-label="Clear search"
+                    onClick={this.clearSearch}
+                  >
+                    <ClearIcon className={classes.barText}/>
+                  </IconButton>
+                </InputAdornment>
+              }
+            />
           </div>
-          <InputBase
-            placeholder="Search…"
-            classes={{
-              root: classes.inputRoot,
-              input: classes.searchInput,
-            }}
-            value={searchText}
-            onChange={this.onSearch}
-            endAdornment={
-              <InputAdornment position="end">
-                <IconButton
-                  aria-label="Clear search"
-                  onClick={this.clearSearch}
-                >
-                  <ClearIcon className={classes.barText}/>
+          </React.Fragment>
+        }
+        {showSnooze && (
+          <div className={classes.actions}>
+                <IconButton aria-label="Snooze"
+                            onClick={onSnoozeAll}>
+                  <SnoozeIcon className={classes.barText}/>
                 </IconButton>
-              </InputAdornment>
-            }
-          />
-        </div>
-        <div className={classes.actions}>
-          {showSnooze &&
-            <IconButton aria-label="Snooze"
-                        onClick={onSnoozeAll}>
-              <SnoozeIcon className={classes.barText}/>
-            </IconButton>
-          }
-        </div>
+                <IconButton aria-label="Complete"
+                            onClick={onCompleteRecurring}>
+                  <CheckBoxIcon className={classes.barText}/>
+                </IconButton>
+          </div>
+        )}
       </Toolbar>
       {errorMessage &&
         <FormHelperText className={classes.error} error={true}>{errorMessage}</FormHelperText>
@@ -245,6 +257,7 @@ EnhancedTableToolbar.propTypes = {
   classes: PropTypes.object.isRequired,
   showSnooze: PropTypes.bool,
   onSnoozeAll: PropTypes.func.isRequired,
+  onCompleteRecurring: PropTypes.func.isRequired,
 };
 
 EnhancedTableToolbar.defaultProps = {

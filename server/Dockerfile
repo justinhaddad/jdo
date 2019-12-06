@@ -2,6 +2,8 @@
 FROM python:3-onbuild
 
 # RUN pip install gunicorn
+RUN pip install --upgrade pip && \
+    pip install dateparser
 
 # Coping source in current directory into the image
 # python:3-onbuild expects the source in /usr/src/app

@@ -21,7 +21,6 @@ import Toolbar from '../toolbar/Toolbar';
 import {withStyles} from '@material-ui/core/styles';
 import {bindActionCreators, compose} from 'redux';
 import {connect} from 'react-redux';
-import {repeatSugar} from '../../const';
 
 const styles = theme => ({
   root: {
@@ -95,6 +94,12 @@ class Reminders extends BaseTodoList {
     this.props.actions.snoozeAll(300);
   };
 
+  handleCompleteRecurring = reminders => {
+    reminders.filter(r => r.repeat != null).map(r => {
+      this.props.actions.updateTodo(r.id, {complete: true});
+    });
+  };
+
   render() {
     let {classes, todos} = this.props;
     if (!todos) {
@@ -114,8 +119,10 @@ class Reminders extends BaseTodoList {
 
     return (
       <React.Fragment>
-        <Toolbar onSnoozeAll={this.handleSnoozeAll} onSearch={this.handleSearch}
-                 count={todos.length} />
+        <Toolbar onSnoozeAll={this.handleSnoozeAll}
+           count={todos.length}
+           onCompleteRecurring={() => this.handleCompleteRecurring(todos)}
+        />
         <Paper className={classes.root}>
         <List className={classes.root}>
           {stableSort(filtered || todos, getSorting(order, orderBy))
