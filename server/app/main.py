@@ -157,15 +157,13 @@ class TodoItem:
 
     def on_patch(self, req, resp, id):
         data = req.context['body']
-        log.error(f'DATA: {data}')
         # Not supporting list changes yet.
         if 'list' in data:
             del data['list']
         todo = model_to_dict(Todo.get_by_id(id))
         todo.update(data)
         if 'repeat' in data and data.get('repeat', 'never') == 'never':
-            todo['repeat'] = None
-        log.error(f'PATCHING: {todo}')
+            data['repeat'] = None
         if 'complete' in data and data['complete']:
             if data.get('completed_on') is None:
                 data['completed_on'] = dt.now()

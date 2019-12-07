@@ -46,6 +46,9 @@ const styles = theme => ({
     width: 15,
     height: 15,
   },
+  todoRow: {
+    padding: 2
+  },
 });
 
 function desc(a, b, orderBy) {
@@ -129,7 +132,7 @@ class Reminders extends BaseTodoList {
             .map(n => {
               return (
                 <React.Fragment key={n.id}>
-                  <ListItem role="checkbox">
+                  <ListItem role="checkbox" className={classes.todoRow}>
                     <Checkbox className={classes.editControl}
                       checked={n.complete}
                       tabIndex={-1}
@@ -160,7 +163,7 @@ class Reminders extends BaseTodoList {
                     <SnoozeButton reminder={n} onClick={this.handleSnooze}/>
                   </ListItem>
                   <li>
-                    <Divider variant="inset"/>
+                    <Divider />
                   </li>
                 </React.Fragment>
               );
