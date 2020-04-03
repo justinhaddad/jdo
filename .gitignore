@@ -68,5 +68,6 @@ venv.bak/
 
 .idea
 yarn.lock
+yarn-error.log
 node_modules
 package-lock.json

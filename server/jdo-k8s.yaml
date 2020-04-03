@@ -1,0 +1,66 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: jdo-pv-volume
+  labels:
+    type: local
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/Users/jhaddad/jdo/"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: jdo-pv-claim
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 3Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jdo-service
+spec:
+  type:  LoadBalancer
+  ports:
+  - protocol: TCP
+    port: 5005
+    targetPort: 8000
+  selector:
+    app: jdo
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jdo-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jdo
+  template:
+    metadata:
+      labels:
+        app: jdo
+    spec:
+      volumes:
+        - name: jdo-pv-storage
+          persistentVolumeClaim:
+            claimName: jdo-pv-claim
+      containers:
+      - name: jdo-server
+        image: server_jdo-service:latest
+        ports:
+          - containerPort: 8000
+        volumeMounts:
+          - mountPath: "/var/lib/"
+            name: jdo-pv-storage

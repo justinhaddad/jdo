@@ -1,18 +1,22 @@
+import dateparser
 import datetime
 from datetime import datetime as dt
-import re
-import sys
-
 import falcon
+from functools import reduce
 import json
 import logging
+import operator
 from peewee import IntegrityError
 from playhouse.shortcuts import model_to_dict
+import re
+import sys
 from wsgiref import simple_server
 
-from models import Todo, SnoozeAll, TodoList
 import models
+from models import Todo, SnoozeAll, TodoList
+from constants import REPEATS
 
+logging.basicConfig(level=logging.DEBUG)
 DEFAULT_LIST = 'Reminders';
 count = 0
 models.connect()
@@ -107,16 +111,24 @@ class CamelSnake:
 
 class Todos:
     def on_get(self, req, resp):
+        clauses = [(Todo.complete == 0)]
+        if req.get_param('search'):
+            clauses.append((Todo.headline.contains(req.get_param('search'))))
         if req.get_param_as_bool('remindersOnly'):
             if SnoozeAll.select().where(
                     SnoozeAll.end < dt.utcnow().isoformat()).count() == 0:
                 todos = []
             else:
-                todos = Todo.select().where(
-                    (Todo.next_reminder <= dt.utcnow().isoformat()) &
-                    (Todo.complete == 0))
+                clauses.append((Todo.next_reminder <= dt.utcnow().isoformat()))
+                todos = Todo.select().where(reduce(operator.and_,
+                                                   clauses)).order_by(
+                    Todo.next_reminder)
         else:
-            todos = Todo.select().where(Todo.complete == 0)
+            todos = Todo.select(
+                Todo.id, Todo.complete, Todo.headline, Todo.next_reminder,
+                Todo.repeat, Todo.created).where(reduce(operator.and_,
+                                                 clauses)).order_by(
+                Todo.next_reminder.asc())
         ret = []
         for t in todos:
             ret.append(model_to_dict(t))
@@ -133,7 +145,7 @@ class Todos:
             t = Todo.create(list=list, **data)
             resp.body = json.dumps(model_to_dict(t), cls=Encoder)
             resp.status = falcon.HTTP_201
-        except IntegrityError as e:
+        except IntegrityError:
             log.exception('Failed to create todo.')
             resp.status = falcon.HTTP_422
 
@@ -145,13 +157,33 @@ class TodoItem:
 
     def on_patch(self, req, resp, id):
         data = req.context['body']
-        # Temp delete list since its not editable yet.
+        # Not supporting list changes yet.
         if 'list' in data:
-            del data['list'];
+            del data['list']
+        todo = model_to_dict(Todo.get_by_id(id))
+        todo.update(data)
+        if 'repeat' in data and data.get('repeat', 'never') == 'never':
+            data['repeat'] = None
+        if 'complete' in data and data['complete']:
+            if data.get('completed_on') is None:
+                data['completed_on'] = dt.now()
+            if todo.get('repeat') is not None:
+                next_reminder = dateparser.parse(
+                    REPEATS[todo['repeat']],
+                    settings={'PREFER_DATES_FROM': 'future'})
+                dup = dict(todo)
+                dup.update({
+                    'next_reminder': next_reminder,
+                    'list': todo['list']['id'],
+                    'complete': False,
+                    'created': dt.utcnow(),
+                })
+                del dup['id']
+                Todo.create(**dup)
+
         models.Todo.set_by_id(id, data)
         resp.status = falcon.HTTP_200
-        todo = Todo.get_by_id(id)
-        resp.body = json.dumps(model_to_dict(todo), cls=Encoder)
+        resp.body = json.dumps(todo, cls=Encoder)
 
 
 class SnoozeAllItem:
@@ -176,4 +208,8 @@ api.add_route('/snooze-all', SnoozeAllItem())
 
 if __name__ == '__main__':
     httpd = simple_server.make_server('127.0.0.1', 5005, api)
+    logger = logging.getLogger('peewee')
+    logger.addHandler(logging.StreamHandler())
+    logger.setLevel(logging.DEBUG)
+    logging.getLogger().setLevel(logging.DEBUG)
     httpd.serve_forever()

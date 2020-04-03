@@ -5,19 +5,21 @@ import AddIcon from '@material-ui/icons/Add';
 import AppBar from '@material-ui/core/AppBar';
 import ClearIcon from '@material-ui/icons/Clear';
 import { fade } from '@material-ui/core/styles/colorManipulator';
+import FormHelperText from '@material-ui/core/FormHelperText';
 import IconButton from '@material-ui/core/IconButton';
 import InputAdornment from '@material-ui/core/InputAdornment';
 import InputBase from '@material-ui/core/InputBase';
+import {repeatOptions} from '../constants';
+import CheckBoxIcon from '@material-ui/icons/CheckBox';
 import SearchIcon from '@material-ui/icons/Search';
 import SnoozeIcon from '@material-ui/icons/Snooze';
+import Sugar from 'sugar-date';
 import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
 
 import {withStyles} from '@material-ui/core/styles/index';
 import {lighten} from '@material-ui/core/styles/colorManipulator';
-import {snoozeAll} from '../../api';
 
-const remote = window.require('electron').remote;
 
 const toolbarStyles = theme => ({
   root: {
@@ -38,6 +40,7 @@ const toolbarStyles = theme => ({
   },
   actions: {
     color: theme.palette.text.secondary,
+    display: 'flex',
   },
   title: {
     flex: '0 0 auto',
@@ -47,9 +50,10 @@ const toolbarStyles = theme => ({
   },
   bar: {
     marginBottom: 0,
-    height: 80,
+    height: 50,
   },
   search: {
+    display: 'flex',
     position: 'relative',
     borderRadius: theme.shape.borderRadius,
     backgroundColor: fade(theme.palette.common.white, 0.15),
@@ -57,6 +61,7 @@ const toolbarStyles = theme => ({
       backgroundColor: fade(theme.palette.common.white, 0.25),
     },
     marginLeft: 0,
+    marginBottom: 15,
     width: '100%',
     [theme.breakpoints.up('sm')]: {
       marginLeft: theme.spacing.unit,
@@ -86,7 +91,7 @@ const toolbarStyles = theme => ({
     [theme.breakpoints.up('sm')]: {
       width: 200,
       '&:focus': {
-        width: 300,
+        width: 400,
       },
     },
   },
@@ -98,41 +103,65 @@ const toolbarStyles = theme => ({
     transition: theme.transitions.create('width'),
     width: '100%',
     [theme.breakpoints.up('sm')]: {
-      width: 100,
+      width: 50,
       '&:focus': {
-        width: 300,
+        width: 400,
       },
     },
   },
   barText: {
-    color: 'white',
+    color: theme.palette.text.primary,
   },
   info: {
+    textAlign: 'left',
     width: 300,
-  }
+    marginBottom: 10,
+  },
+  error: {
+    position: 'relative',
+    top: -20,
+    fontSize: 15,
+    left: 165,
+  },
 });
 
 class EnhancedTableToolbar extends React.Component {
   state = {
     headline: '',
     searchText: '',
+    errorMessage: false,
   };
 
   handleCreate = () => {
-    this.props.onCreate(this.state.headline);
-    this.setState({headline: ''});
+    // Check for valid nextReminder term before attemptng to create.
+    let headline = this.state.headline;
+    const parts = headline.split(';');
+    let errorMessage = '';
+    if(parts.length > 1) {
+      try {
+        if(parts[1].trim()) {
+          Sugar.Date.create(parts[1]).toISOString();
+        }
+        if(parts.length > 2 && parts[2].trim()) {
+          if(!repeatOptions.includes(parts[2].trim().toLowerCase())) {
+            errorMessage = `Invalid repeat option: ${parts[2]}`;
+          }
+        }
+      } catch(error) {
+        errorMessage = `Invalid reminder time: ${parts[1]}`;
+      }
+    }
+    if(!errorMessage) {
+      this.props.onCreate(headline);
+      headline = '';
+    }
+    this.setState({errorMessage, headline});
   };
 
   catchReturn = e => {
     if (e.key === 'Enter') {
       this.handleCreate();
     }
-  };
-
-  snooze = () => {
-    snoozeAll(300);
-    console.log('Hiding window.', remote.getCurrentWindow().getTitle());
-    remote.getCurrentWindow().hide();
   };
 
   onSearch = e => {
@@ -146,8 +175,8 @@ class EnhancedTableToolbar extends React.Component {
   };
 
   render() {
-    const {classes, onCreate, showSnooze, count} = this.props;
-    const {headline, searchText} = this.state;
+    const {classes, onCreate, showSnooze, count, onSnoozeAll, onCompleteRecurring} = this.props;
+    const {headline, searchText, errorMessage} = this.state;
 
     return (
       <div className={classes.bar}>
@@ -157,12 +186,13 @@ class EnhancedTableToolbar extends React.Component {
           <Typography variant="h6" className={classes.barText}>Total: {count}</Typography>
         </div>
         {onCreate &&
+          <React.Fragment>
           <div className={classes.search}>
             <div className={classes.searchIcon}>
-              <AddIcon />
+              <AddIcon/>
             </div>
             <InputBase
-              placeholder="New Todo…"
+              placeholder="New Todo… [; reminder, e.g. noon [; repeat, e.g. daily]]"
               classes={{
                 root: classes.inputRoot,
                 input: classes.addInput,
@@ -170,43 +200,53 @@ class EnhancedTableToolbar extends React.Component {
               value={headline}
               onChange={e => this.setState({headline: e.target.value})}
               onKeyPress={this.catchReturn}
+              error={!!errorMessage}
             />
           </div>
-        }
-        <div className={classes.spacer}/>
-        <div className={classes.search}>
-          <div className={classes.searchIcon}>
-            <SearchIcon />
+          <div className={classes.spacer}/>
+          <div className={classes.search}>
+            <div className={classes.searchIcon}>
+              <SearchIcon />
+            </div>
+            <InputBase
+              placeholder="Search…"
+              classes={{
+                root: classes.inputRoot,
+                input: classes.searchInput,
+              }}
+              value={searchText}
+              onChange={this.onSearch}
+              endAdornment={
+                <InputAdornment position="end">
+                  <IconButton
+                    aria-label="Clear search"
+                    onClick={this.clearSearch}
+                  >
+                    <ClearIcon className={classes.barText}/>
+                  </IconButton>
+                </InputAdornment>
+              }
+            />
           </div>
-          <InputBase
-            placeholder="Search…"
-            classes={{
-              root: classes.inputRoot,
-              input: classes.searchInput,
-            }}
-            value={searchText}
-            onChange={this.onSearch}
-            endAdornment={
-              <InputAdornment position="end">
-                <IconButton
-                  aria-label="Clear search"
-                  onClick={this.clearSearch}
-                >
-                  <ClearIcon className={classes.barText}/>
+          </React.Fragment>
+        }
+        {showSnooze && (
+          <div className={classes.actions}>
+                <IconButton aria-label="Snooze"
+                            onClick={onSnoozeAll}>
+                  <SnoozeIcon className={classes.barText}/>
                 </IconButton>
-              </InputAdornment>
-            }
-          />
-        </div>
-        <div className={classes.actions}>
-          {showSnooze &&
-            <IconButton aria-label="Snooze"
-                        onClick={this.snooze}>
-              <SnoozeIcon className={classes.barText}/>
-            </IconButton>
-          }
-        </div>
+                <IconButton aria-label="Complete"
+                            onClick={onCompleteRecurring}>
+                  <CheckBoxIcon className={classes.barText}/>
+                </IconButton>
+          </div>
+        )}
       </Toolbar>
+      {errorMessage &&
+        <FormHelperText className={classes.error} error={true}>{errorMessage}</FormHelperText>
+      }
+
       </AppBar>
       </div>
     );
@@ -216,6 +256,8 @@ class EnhancedTableToolbar extends React.Component {
 EnhancedTableToolbar.propTypes = {
   classes: PropTypes.object.isRequired,
   showSnooze: PropTypes.bool,
+  onSnoozeAll: PropTypes.func.isRequired,
+  onCompleteRecurring: PropTypes.func.isRequired,
 };
 
 EnhancedTableToolbar.defaultProps = {

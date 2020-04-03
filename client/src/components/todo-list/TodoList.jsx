@@ -1,6 +1,6 @@
 import React from 'react';
-import {fromJS} from 'immutable';
-import {debounce} from 'lodash';
+import { bindActionCreators, compose } from 'redux';
+import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import {withStyles} from '@material-ui/core/styles';
 import Checkbox from '@material-ui/core/Checkbox';
@@ -15,7 +15,6 @@ import Grid from '@material-ui/core/Grid';
 import IconButton from '@material-ui/core/IconButton';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
-import ListItemText from '@material-ui/core/ListItemText';
 import LoopIcon from '@material-ui/icons/Loop';
 import MenuItem from '@material-ui/core/MenuItem';
 import {MuiPickersUtilsProvider} from 'material-ui-pickers';
@@ -28,39 +27,13 @@ import Toolbar from '../toolbar';
 import Tooltip from '@material-ui/core/Tooltip';
 import Typography from '@material-ui/core/Typography';
 
-import {createTodo, deleteTodo, loadTodos, updateTodo} from '../../api';
 import BaseTodoList from '../BaseTodoList';
+import {ActionCreators} from '../../actions';
 
-// const remote = window.require('electron').remote;
 
 String.prototype.capitalize = function () {
   return this.charAt(0).toUpperCase() + this.slice(1);
 };
-
-
-function desc(a, b, orderBy) {
-  if (b[orderBy] < a[orderBy]) {
-    return -1;
-  }
-  if (b[orderBy] > a[orderBy]) {
-    return 1;
-  }
-  return 0;
-}
-
-function stableSort(array, cmp) {
-  const stabilizedThis = array.map((el, index) => [el, index]);
-  stabilizedThis.sort((a, b) => {
-    const order = cmp(a[0], b[0]);
-    if (order !== 0) return order;
-    return a[1] - b[1];
-  });
-  return stabilizedThis.map(el => el[0]);
-}
-
-function getSorting(order, orderBy) {
-  return order === 'desc' ? (a, b) => desc(a, b, orderBy) : (a, b) => -desc(a, b, orderBy);
-}
 
 const styles = theme => ({
   root: {
@@ -83,58 +56,67 @@ const styles = theme => ({
     fontSize: 20,
     marginTop: 10,
     marginRight: 10,
+    color: theme.palette.text.primary,
   },
   editControl: {
     padding: 3,
-  }
+  },
+  rowButtons: {
+    position: 'relative',
+    top: -5,
+    marginLeft: 10,
+    display: 'inline',
+  },
 });
 
 class TodoList extends BaseTodoList {
   state = {
-    todos: fromJS([]),
+    // todos: fromJS([]),
+    remindersOnly: false,
     orderBy: 'nextReminder',
     order: 'desc',
     editing: false,
   };
 
-  create = async headline => {
-    await createTodo(headline);
+  componentDidMount() {
     this.reloadTodos();
-  };
+    setInterval(this.reloadTodos, 60000);
+  }
 
-  handleMenuItemClick = async (event, index) => {
-    this.setState({selectedIndex: index});
-    await updateTodo(this.state.selectedTodo, {repeat: repeatOptions[index]});
-    this.reloadTodos();
+  create = async headline => {
+    await this.props.actions.createTodo(headline);
   };
 
   handleRepeatChange = async (e, todoId) => {
-    await updateTodo(todoId, {repeat: e.target.value});
-    this.reloadTodos();
+    await this.props.actions.updateTodo(todoId, {repeat: e.target.value});
+    // this.reloadTodos();
   };
 
   handleNextReminderChange = async (todoId, date) => {
-    await updateTodo(todoId, {nextReminder: date.toISOString()});
+    await this.props.actions.updateTodo(
+      todoId, {nextReminder: date.toISOString()});
     this.reloadTodos();
   };
 
   render() {
-    const {classes} = this.props;
-    const {todos, filtered, order, orderBy, editing} = this.state;
+    let {classes, todos} = this.props;
+    if (!todos) {
+      todos = [];
+    }
+    const {filtered, editing} = this.state;
     return (
       <React.Fragment>
-        <Toolbar onCreate={this.create} onSearch={this.handleSearch} showSnooze={false}
-                 count={todos.size} />
+        <Toolbar onCreate={this.create}
+                 onSearch={this.handleSearch}
+                 showSnooze={false}
+                 count={todos.length} />
         <Paper className={classes.root}>
           <List className={classes.root}>
-            {stableSort(filtered || todos.toJS(), getSorting(order, orderBy))
-              .map(n => {
+            {(filtered || todos).map(n => {
+                console.log('Next: ', n);
                 return (
-                  <React.Fragment>
-                    <ListItem
-                      role="checkbox"
-                      key={n.id}
-                    >
+                  <React.Fragment key={n.id}>
+                    <ListItem role="checkbox">
                       <Grid container>
                         <Grid xs={1}>
                           <Checkbox className={classes.editControl}
@@ -152,17 +134,18 @@ class TodoList extends BaseTodoList {
                           </Typography>
                         </Grid>
                         <Grid item xs={3}>
-                          <Tooltip title={n.nextReminder ? Sugar.Date(n.nextReminder).relative().raw : null}>
+                          {n.nextReminder &&
+                          <Tooltip title={Sugar.Date(n.nextReminder).relative().raw}>
                             <NotificationsIcon className={classes.icon}/>
                           </Tooltip>
+                          }
                           <MuiPickersUtilsProvider utils={DateFnsUtils}>
                             <InlineDateTimePicker
                               keyboard
                               value={n.nextReminder}
                               onChange={date => this.handleNextReminderChange(n.id, date)}
                               label={null}
-                              showTodayButton
-                              format="MMM do h:ss a"
+                              format="MMM do h:mm a"
                             />
                           </MuiPickersUtilsProvider>
                         </Grid>
@@ -170,7 +153,7 @@ class TodoList extends BaseTodoList {
                           <LoopIcon className={classes.icon}/>
                           <FormControl className={classes.formControl}>
                             <Select className={classes.repeatSelect}
-                                    value={n.repeat}
+                                    value={n.repeat || 'Never'}
                                     onChange={e => this.handleRepeatChange(e, n.id)}
                                     inputProps={{
                                       name: `repeat-${n.id}`,
@@ -178,11 +161,14 @@ class TodoList extends BaseTodoList {
                                     }}
                             >
                               {repeatOptions.map(option => (
-                                <MenuItem className={classes.repeats}
-                                          value={option}>{option.capitalize()}</MenuItem>
+                                <MenuItem key={`${n.id}${option}`}
+                                          className={classes.repeats}
+                                          value={option}>{option.capitalize()}
+                                </MenuItem>
                               ))}
                             </Select>
                           </FormControl>
+                          <div className={classes.rowButtons}>
                           <IconButton aria-label="Edit" className={classes.editControl}
                                       onClick={e => this.setState({editing: n})}>
                             <EditIcon/>
@@ -191,6 +177,7 @@ class TodoList extends BaseTodoList {
                                       onClick={() => this.handleDelete(n.id)}>
                             <DeleteIcon/>
                           </IconButton>
+                          </div>
                         </Grid>
                       </Grid>
                     </ListItem>
@@ -202,7 +189,7 @@ class TodoList extends BaseTodoList {
               })}
           </List>
           <EditTodoDialog todo={editing} onSave={this.handleSave}
-                          onCancel={this.handleCloseEditDialog}
+                          onClose={this.handleCloseEditDialog}
                           onDelete={this.handleDelete}
           />
         </Paper>
@@ -211,8 +198,23 @@ class TodoList extends BaseTodoList {
   }
 }
 
+const mapStateToProps = state => {return {...state}};
+
+const mapDispatchToProps = dispatch => {
+  return {
+    actions: bindActionCreators(ActionCreators, dispatch),
+    dispatch,
+  };
+};
+
 TodoList.propTypes = {
   classes: PropTypes.object.isRequired,
 };
 
-export default withStyles(styles)(TodoList);
+export default compose(
+  withStyles(styles),
+  connect(
+    mapStateToProps,
+    mapDispatchToProps,
+  )
+)(TodoList);

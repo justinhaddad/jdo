@@ -32,7 +32,6 @@ class App extends Component {
       note: 'This is a note.',
       created: new Date(),
     });
-    console.log(reminders);
     this.setState({reminders, count});
   };
 

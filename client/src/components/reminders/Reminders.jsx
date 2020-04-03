@@ -1,13 +1,11 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import {withStyles} from '@material-ui/core/styles';
-import Button from '@material-ui/core/Button';
+import {ActionCreators} from '../../actions';
+import Badge from '@material-ui/core/Badge';
+import BaseTodoList from '../BaseTodoList';
 import Checkbox from '@material-ui/core/Checkbox';
 import Divider from '@material-ui/core/Divider';
 import EditIcon from '@material-ui/icons/Edit';
 import EditTodoDialog from '../edit-dialog';
 import LoopIcon from '@material-ui/icons/Loop';
-import SnoozeIcon from '@material-ui/icons/Snooze';
 import IconButton from '@material-ui/core/IconButton';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
@@ -15,42 +13,14 @@ import ListItemText from '@material-ui/core/ListItemText';
 import Paper from '@material-ui/core/Paper';
 import Tooltip from '@material-ui/core/Tooltip';
 import Typography from '@material-ui/core/Typography';
-import {fromJS} from 'immutable';
-import {createTodo, loadTodos, updateTodo, snoozeAll} from '../../api';
-import Popover from '@material-ui/core/Popover';
+import PropTypes from 'prop-types';
+import React from 'react';
+import SnoozeButton from './SnoozeButton';
 import Sugar from 'sugar-date';
 import Toolbar from '../toolbar/Toolbar';
-import BaseTodoList from '../BaseTodoList';
-
-
-const snoozeOptions = {
-  '5m': 'in 5 minutes',
-  '15m': 'in 15 minutes',
-  '30m': 'in 30 minutes',
-  '45m': 'in 45 minutes',
-  '1h': 'in 1 hour',
-  '2h': 'in 2 hours',
-  '3h': 'in 3 hours',
-  '4h': 'in 4 hours',
-  '8h': 'in 8 hours',
-  '1d': 'in 1 day',
-  '2d': 'in 2 days',
-  '3d': 'in 3 days',
-  '1w': 'in 1 week',
-  '2w': 'in 2 weeks',
-  '1mo': 'in 1 month',
-  '1y': 'in 1 year',
-  'tomorrow morn': 'tomorrow at 9am',
-  'tomorrow noon': 'tomorrow at noon',
-  'tomorrow eve': 'tomorrow at 5pm',
-  'Su': 'Sunday at noon',
-  'M': 'Monday at noon',
-  'Tu': 'Tuesday at noon',
-  'W': 'Wednesday at noon',
-  'Th': 'Thursday at noon',
-  'F': 'Friday at noon',
-  'Sa': 'Saturday at noon',
-};
+import {withStyles} from '@material-ui/core/styles';
+import {bindActionCreators, compose} from 'redux';
+import {connect} from 'react-redux';
 
 const styles = theme => ({
   root: {
@@ -68,7 +38,17 @@ const styles = theme => ({
   },
   editControl: {
     padding: 3,
-  }
+  },
+  badge: {
+    fontSize: 9,
+    top: 8,
+    right: -8,
+    width: 15,
+    height: 15,
+  },
+  todoRow: {
+    padding: 2
+  },
 });
 
 function desc(a, b, orderBy) {
@@ -97,50 +77,62 @@ function getSorting(order, orderBy) {
 
 class Reminders extends BaseTodoList {
   state = {
-    todos: fromJS([]),
-    anchorEl: null,
     orderBy: 'nextReminder',
     order: 'desc',
     searchTxt: null,
     editing: false,
-    remote: window.require('electron').remote,
     remindersOnly: true,
-};
-
-  handleSnooze = async e => {
-    this.hideSnoozePopover();
-    const next = Sugar.Date.create(e.currentTarget.value);
-    await updateTodo(this.state.selected, {nextReminder: next.toISOString()});
-    this.reloadTodos();
   };
 
-  hideSnoozePopover = () => {
-    this.setState({anchorEl: null});
+  handleSnooze = async (id, value) => {
+    let nextReminder = Sugar.Date(value);
+    if(nextReminder.isPast().raw) {
+      nextReminder = Sugar.Date(`next ${value}`);
+    }
+    await this.props.actions.updateTodo(
+      id, {nextReminder: nextReminder.toISOString().raw});
   };
-
 
   handleSnoozeAll = () => {
-    snoozeAll(10);
+    this.props.actions.snoozeAll(300);
+  };
+
+  handleCompleteRecurring = reminders => {
+    reminders.filter(r => r.repeat != null).map(r => {
+      this.props.actions.updateTodo(r.id, {complete: true});
+    });
   };
 
   render() {
-    const {classes} = this.props;
-    const {todos, filtered, order, orderBy, anchorEl, editing} = this.state;
-    const open = Boolean(anchorEl);
+    let {classes, todos} = this.props;
+    if (!todos) {
+      todos = [];
+    }
+    todos = todos.filter(t => !t.complete && t.nextReminder &&
+      new Date(t.nextReminder) <= new Date());
+    const {filtered, order, orderBy, editing} = this.state;
+
+    const abbreviatedRepeat =repeat => {
+      let abbrev = repeat.charAt(0).toUpperCase();
+      if(repeat.endsWith('days')) {
+        abbrev += repeat.charAt(1);
+      }
+      return abbrev;
+    };
+
     return (
       <React.Fragment>
-        <Toolbar onSnoozeAll={this.handleSnoozeAll} onSearch={this.handleSearch}
-                 count={todos.size} />
+        <Toolbar onSnoozeAll={this.handleSnoozeAll}
+           count={todos.length}
+           onCompleteRecurring={() => this.handleCompleteRecurring(todos)}
+        />
         <Paper className={classes.root}>
         <List className={classes.root}>
-          {stableSort(filtered || todos.toJS(), getSorting(order, orderBy))
+          {stableSort(filtered || todos, getSorting(order, orderBy))
             .map(n => {
               return (
-                <React.Fragment>
-                  <ListItem
-                    role="checkbox"
-                    key={n.id}
-                  >
+                <React.Fragment key={n.id}>
+                  <ListItem role="checkbox" className={classes.todoRow}>
                     <Checkbox className={classes.editControl}
                       checked={n.complete}
                       tabIndex={-1}
@@ -154,7 +146,10 @@ class Reminders extends BaseTodoList {
                             {n.headline}
                             {n.repeat && n.repeat !== 'never' &&
                               <Tooltip title={n.repeat}>
-                                <LoopIcon color="disabled" className={classes.repeatIcon}/>
+                                <Badge badgeContent={abbreviatedRepeat(n.repeat)} color="primary"
+                                       classes={{badge: classes.badge}}>
+                                  <LoopIcon color="primary" className={classes.repeatIcon}/>
+                                </Badge>
                               </Tooltip>
                             }
                           </Typography>
@@ -162,43 +157,21 @@ class Reminders extends BaseTodoList {
                       }
                     />
                     <IconButton aria-label="Edit" className={classes.editControl}
-                                onClick={e => this.setState({editing: n})}>
+                                onClick={() => this.setState({editing: n})}>
                       <EditIcon/>
                     </IconButton>
-                    <IconButton aria-label="Snooze" className={classes.editControl}
-                                onClick={e => this.setState({anchorEl: e.currentTarget, selected: n.id})}>
-                      <SnoozeIcon/>
-                    </IconButton>
+                    <SnoozeButton reminder={n} onClick={this.handleSnooze}/>
                   </ListItem>
                   <li>
-                    <Divider variant="inset"/>
+                    <Divider />
                   </li>
                 </React.Fragment>
               );
             })
           }
         </List>
-        <Popover
-          id="simple-popper"
-          open={open}
-          anchorEl={anchorEl}
-          onClose={this.hideSnoozePopover}
-          anchorOrigin={{
-            vertical: 'bottom',
-            horizontal: 'center',
-          }}
-          transformOrigin={{
-            vertical: 'top',
-            horizontal: 'center',
-          }}
-        >
-          {Object.keys(snoozeOptions).map(opt => (
-            <Button value={snoozeOptions[opt]}
-                    onClick={this.handleSnooze}>{opt}</Button>
-          ))}
-        </Popover>
         <EditTodoDialog todo={editing} onSave={this.handleSave}
-                        onCancel={this.handleCloseEditDialog}
+                        onClose={this.handleCloseEditDialog}
                         onDelete={this.handleDelete}
         />
       </Paper>
@@ -207,8 +180,23 @@ class Reminders extends BaseTodoList {
   }
 }
 
+const mapStateToProps = state => {return {...state}};
+
+const mapDispatchToProps = dispatch => {
+  return {
+    actions: bindActionCreators(ActionCreators, dispatch),
+    dispatch,
+  };
+};
+
 Reminders.propTypes = {
   classes: PropTypes.object.isRequired,
 };
 
-export default withStyles(styles)(Reminders);
+export default compose(
+  withStyles(styles),
+  connect(
+    mapStateToProps,
+    mapDispatchToProps,
+  )
+)(Reminders);
